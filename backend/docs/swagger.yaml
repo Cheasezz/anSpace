@@ -1,0 +1,146 @@
+basePath: /
+definitions:
+  core.SignIn:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  core.SignUp:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - name
+    - password
+    - username
+    type: object
+  v1.errorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  v1.tokenResponse:
+    properties:
+      accessToken:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API Server for AnSpace Application
+  title: AnSpace App API
+  version: "1.0"
+paths:
+  /api/v1/auth/refresh:
+    post:
+      description: accept refresh token from cookie, and return new access token
+      operationId: refresh-access-token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: refresh access token
+      tags:
+      - auth
+  /api/v1/auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: login to accont with username and password and return access token
+        in JSON and refresh token in cookies
+      operationId: login-to-account
+      parameters:
+      - description: signin input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/core.SignIn'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: login to account
+      tags:
+      - auth
+  /api/v1/auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: create account in data base and return access token in JSON and
+        refresh token in cookies
+      operationId: create-account
+      parameters:
+      - description: signUp input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/core.SignUp'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: create account
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
