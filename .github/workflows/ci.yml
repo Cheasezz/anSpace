@@ -5,7 +5,7 @@ on:
       - main
 
 jobs:
-golangci-lint:
+  golangci-lint:
     name: runner / golangci-lint
     runs-on: ubuntu-latest
     steps:
