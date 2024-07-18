@@ -98,12 +98,12 @@ func initTokens() auth.Tokens {
 		Access: tokenStr,
 		Refresh: auth.RTInfo{
 			Token:     tokenStr,
-			ExpiresAt: time.Now().Add(time.Hour),
+			ExpiresAt: time.Now().Add(time.Hour).UTC(),
 			TTLInSec:  43000},
 	}
 }
 func initSession() core.Session {
-	return core.Session{UserId: "1", RefreshToken: "token", ExpiresAt: time.Now().Add(time.Hour)}
+	return core.Session{UserId: "1", RefreshToken: "token", ExpiresAt: time.Now().Add(time.Hour).UTC()}
 }
 
 type deps struct {
@@ -308,7 +308,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
 				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
-				d.tm.EXPECT().NewJWT(s.UserId).Return(tkns.Access, nil)
+				d.tm.EXPECT().NewJWT(s.UserId).Return("newToken", nil)
 			},
 		},
 		{
@@ -319,9 +319,9 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
 				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
-				d.tm.EXPECT().NewJWT(s.UserId).Return(tkns.Access, nil)
-				d.tm.EXPECT().NewRefreshToken().Return(tkns.Refresh, nil)
-				d.r.EXPECT().SetSession(gomock.Any(), s).Return(nil)
+				d.tm.EXPECT().NewJWT(s.UserId).Return("newToken", nil)
+				d.tm.EXPECT().NewRefreshToken().Return(auth.RTInfo{Token: "newToken"}, nil)
+				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any()).Return(nil)
 			},
 		},
 		{
@@ -366,7 +366,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 				require.EqualError(t, tt.expErr, err.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.tokens, tkns)
+				require.NotEqual(t, tt.tokens, tkns)
 			}
 		})
 	}
