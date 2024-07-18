@@ -5,16 +5,15 @@ on:
       - main
 
 jobs:
-  tests:
-    name: runner / tests
+  unit_tests:
+    name: unit-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: 1.22
-          cache-dependency-path: |
-             backend/go.sum
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Unit Tests
         working-directory: backend
@@ -26,9 +25,16 @@ jobs:
           -race \
           -coverprofile=coverage.txt \
           ./..."
-      - name: Upload coverage report
-        working-directory: backend
-        run: bash <(curl -s https://codecov.io/bash)
+          
+  int_tests:
+    name: int-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - name: Integration tests
         working-directory: backend
@@ -38,3 +44,4 @@ jobs:
           --build \
           --abort-on-container-exit \
           --exit-code-from integration"
+
