@@ -17,7 +17,8 @@ jobs:
              backend/go.sum
 
       - name: Unit Tests
-        run: "cd backend
+        working-directory: backend
+        run: "
           go test \
           -v \
           -short \
