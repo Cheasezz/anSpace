@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/Cheasezz/anSpace/backend/config"
 	"github.com/Cheasezz/anSpace/backend/internal/app"
@@ -41,25 +40,23 @@ type APITestSuite struct {
 	userCookie string
 }
 
-const pgURL = "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
-const schemaUrl = "../schema"
-
 func (s *APITestSuite) SetupSuite() {
 	l := logger.New("info")
 
-	psql, err := postgres.NewPostgressDB(config.PG{PoolMax: 4, URL: pgURL})
+	cfg, err := config.NewConfigIntTest()
+	if err != nil {
+		l.Fatal("failed initialize config integration: %s", err.Error())
+	}
+
+	psql, err := postgres.NewPostgressDB(cfg.PG)
 	if err != nil {
 		l.Fatal("failed initialize db: %s", err.Error())
 	}
 
-	app.DBMigrate(schemaUrl, pgURL, l)
+	app.DBMigrate(cfg.PG, l)
 
-	hasher := hasher.NewSHA1Hasher(config.Hasher{Salt: "salt"})
-	tokenManager, err := auth.NewManager(config.TokenManager{
-		SigningKey:      "siginKey",
-		AccessTokenTTL:  time.Hour,
-		RefreshTokenTTL: time.Hour * 48,
-	})
+	hasher := hasher.NewSHA1Hasher(cfg.Hasher)
+	tokenManager, err := auth.NewManager(cfg.TokenManager)
 	if err != nil {
 		l.Fatal("failed initialize tokenManager: %s", err.Error())
 	}
@@ -75,44 +72,43 @@ func (s *APITestSuite) SetupSuite() {
 	handlers := httpHandlers.NewHandlers(v1.Deps{
 		Services:     services,
 		TokenManager: tokenManager,
-		ConfigHTTP:   config.HTTP{Host: "127.0.0.1", Port: "8080"},
+		ConfigHTTP:   cfg.HTTP,
 		Log:          l,
 	})
 
-	server := httpserver.NewServer(config.HTTP{Host: "127.0.0.1", Port: "8080"}, handlers.Init())
+	server := httpserver.NewServer(cfg.HTTP, handlers.Init())
 	s.logger = l
 	s.db = psql
 	s.repos = repos
 	s.services = services
 	s.handlers = handlers
 	s.server = server
-	// s.createUser = true
 
 }
 func (s *APITestSuite) SetupTest() {
 	s.db.Pool.Exec(context.Background(), "truncate users, users_sessions")
-		var username string
-		var st []byte
+	var username string
+	var st []byte
 
-		inputSignUp := `{"Name": "Iurii", "Username": "Cheasezz", "Password": "qwerty123456"}`
-		r := s.Require()
+	inputSignUp := `{"Name": "Iurii", "Username": "Cheasezz", "Password": "qwerty123456"}`
+	r := s.Require()
 
-		// SignUp for create new user before test every handlers
-		resp, err := http.Post("http://"+s.server.HttpServer.Addr+"/api/v1/auth/signup", "json", bytes.NewBufferString(inputSignUp))
-		if err != nil {
-			s.logger.Error("http post signup error: %s", err.Error())
-		}
-		err = s.db.Scany.Get(context.Background(), s.db.Pool, &username, `select username from users where username='Cheasezz' and name='Iurii'`)
-		if err != nil {
-			s.logger.Error("FromTestSignUp db scany get error: %s", err.Error())
-		}
-		st, _ = io.ReadAll(resp.Body)
-		s.userCookie = resp.Cookies()[0].Value
+	// SignUp for create new user before test every handlers
+	resp, err := http.Post("http://"+s.server.HttpServer.Addr+"/api/v1/auth/signup", "json", bytes.NewBufferString(inputSignUp))
+	if err != nil {
+		s.logger.Error("http post signup error: %s", err.Error())
+	}
+	err = s.db.Scany.Get(context.Background(), s.db.Pool, &username, `select username from users where username='Cheasezz' and name='Iurii'`)
+	if err != nil {
+		s.logger.Error("FromTestSignUp db scany get error: %s", err.Error())
+	}
+	st, _ = io.ReadAll(resp.Body)
+	s.userCookie = resp.Cookies()[0].Value
 
-		r.Equal(http.StatusOK, resp.StatusCode)
-		r.Equal("Cheasezz", username)
-		r.Contains(fmt.Sprintf("%s", st), `{"accessToken":`)
-		r.Equal(resp.Cookies()[0].Name, "RefreshToken")
+	r.Equal(http.StatusOK, resp.StatusCode)
+	r.Equal("Cheasezz", username)
+	r.Contains(fmt.Sprintf("%s", st), `{"accessToken":`)
+	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 
 }
 func (s *APITestSuite) TearDownTest() {

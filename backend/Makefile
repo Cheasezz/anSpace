@@ -10,15 +10,18 @@ cover:
 	rm coverage.out
 
 
-test.integration:
+test.integration: ### Run local integration tests
 	docker run --name=test-db -e POSTGRES_PASSWORD=qwerty -p 5432:5432 -d --rm postgres
 
 	GIN_MODE=release go test -v -count=1 ./integration-test/
 	docker stop test-db
 
+compose-up-integration-test: ### Run docker-compose with integration tests
+	docker-compose -f docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from integration
+	
 gen:
-	mockgen -source=internal/repository/psql/auth.go -destination=internal/repository/psql/mocks/mock_auth_repo.go 
-	mockgen -source=internal/service/auth.go -destination=internal/service/mocks/mock_auth_service.go
-	mockgen -source=pkg/auth/manager.go -destination=pkg/auth/mocks/mock_auth_manager.go
-	mockgen -source=pkg/logger/logger.go -destination=pkg/logger/mocks/mock_logger.go
-	mockgen -source=pkg/hasher/hasher.go -destination=pkg/hasher/mocks/mock_hasher.go
+	mockgen -source=backend/internal/repository/psql/auth.go -destination=backend/internal/repository/psql/mocks/mock_auth_repo.go 
+	mockgen -source=backend/internal/service/auth.go -destination=backend/internal/service/mocks/mock_auth_service.go
+	mockgen -source=backend/pkg/auth/manager.go -destination=backend/pkg/auth/mocks/mock_auth_manager.go
+	mockgen -source=backend/pkg/logger/logger.go -destination=backend/pkg/logger/mocks/mock_logger.go
+	mockgen -source=backend/pkg/hasher/hasher.go -destination=backend/pkg/hasher/mocks/mock_hasher.go

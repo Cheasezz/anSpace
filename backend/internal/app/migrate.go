@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Cheasezz/anSpace/backend/config"
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
@@ -16,9 +17,9 @@ const (
 	_defaultTimeout  = time.Second
 )
 
-func DBMigrate(schemaUrl, pgUrl string, l logger.Logger) {
-	if len(pgUrl) == 0 {
-		l.Fatal("migrate: environment variable not declared: PG_URL")
+func DBMigrate(cfg config.PG, l logger.Logger) {
+	if len(cfg.URL) == 0 {
+		l.Fatal("migrate: cfg.url is empty")
 	}
 
 	var (
@@ -28,7 +29,7 @@ func DBMigrate(schemaUrl, pgUrl string, l logger.Logger) {
 	)
 
 	for attempts > 0 {
-		m, err = migrate.New("file://"+schemaUrl, pgUrl)
+		m, err = migrate.New("file://"+cfg.Schema_Url, cfg.URL)
 		if err == nil {
 			break
 		}

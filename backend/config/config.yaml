@@ -4,7 +4,7 @@ http:
 
 pg:
   pool_max: 15
-  pg_url: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+  pg_url: "postgres://postgres:qwerty@postgres:5432/postgres?sslmode=disable"
   schema_url: "schema"
 
 hasher:
@@ -13,7 +13,7 @@ hasher:
 token_manager:
   signing_key: "qqvgfg5jk3fwioi2ifsd"
   atttl: 15m
-  rtttl: 2880m
+  rtttl: 43800m
 
 logger:
   log_level: "debug"

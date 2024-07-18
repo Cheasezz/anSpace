@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "qwerty"
+      POSTGRES_DB: "postgres"
+    ports:
+      - 5432:5432
+
+  integration:
+    build:
+      context: .
+      dockerfile: integration-test/Dockerfile
+    environment:
+      PG_URL: "postgres://postgres:qwerty@postgres:5432/postgres?sslmode=disable"
+    container_name: integration
+    image: integration
+    depends_on:
+      - postgres

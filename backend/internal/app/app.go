@@ -26,7 +26,7 @@ func Run(cfg *config.Config) {
 	}
 	defer psql.Close()
 
-	DBMigrate(cfg.PG.Schema_Url, cfg.PG.URL, l)
+	DBMigrate(cfg.PG, l)
 
 	hasher := hasher.NewSHA1Hasher(cfg.Hasher)
 	tokenManager, err := auth.NewManager(cfg.TokenManager)

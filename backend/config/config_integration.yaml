@@ -1,0 +1,19 @@
+http:
+  host: "localhost"
+  port: "8080"
+
+pg:
+  pool_max: 15
+  pg_url: "postgres://postgres:qwerty@localhost:5432/postgres?sslmode=disable"
+  schema_url: "../schema"
+
+hasher:
+  salt: "salt"
+
+token_manager:
+  signing_key: "sigingKey"
+  atttl: 15m
+  rtttl: 2880m
+
+logger:
+  log_level: "debug"

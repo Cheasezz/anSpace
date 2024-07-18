@@ -55,3 +55,19 @@ func NewConfig() (*Config, error) {
 
 	return cfg, nil
 }
+
+func NewConfigIntTest() (*Config, error) {
+	cfg := &Config{}
+
+	err := cleanenv.ReadConfig("../config/config_integration.yaml", cfg)
+	if err != nil {
+		return nil, fmt.Errorf("read config error: %w", err)
+	}
+
+	err = cleanenv.ReadEnv(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
