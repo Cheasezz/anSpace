@@ -19,6 +19,7 @@ jobs:
   tests:
     name: runner / tests
     runs-on: ubuntu-latest
+    needs: [golangci-lint]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
