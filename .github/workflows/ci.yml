@@ -5,15 +5,27 @@ on:
       - main
 
 jobs:
-  unit_tests:
-    name: unit-tests
+golangci-lint:
+    name: runner / golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v2
+        with: 
+          workdir: backend
+
+  tests:
+    name: runner / tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          go-version: 1.22
+          cache-dependency-path: |
+             backend/go.sum
 
       - name: Unit Tests
         working-directory: backend
@@ -25,16 +37,6 @@ jobs:
           -race \
           -coverprofile=coverage.txt \
           ./..."
-          
-  int_tests:
-    name: int-tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
 
       - name: Integration tests
         working-directory: backend
@@ -44,4 +46,3 @@ jobs:
           --build \
           --abort-on-container-exit \
           --exit-code-from integration"
-
