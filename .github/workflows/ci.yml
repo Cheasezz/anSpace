@@ -32,7 +32,7 @@ jobs:
 
       - name: Unit Tests
         working-directory: backend
-        run: make cover
+        run: make test100
 
       - name: Integration tests
         working-directory: backend
