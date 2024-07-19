@@ -3,13 +3,15 @@ package integration_test
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 )
 
 func (s *APITestSuite) TestSignUp() {
-	s.db.Pool.Exec(context.Background(), "truncate users, users_sessions")
+	_, err := s.db.Pool.Exec(context.Background(), "truncate users, users_sessions")
+	if err != nil {
+		s.logger.Error("db exec error: %s", err.Error())
+	}
 
 	var username string
 	inputBody := `{"Name": "Iurii", "Username": "Cheasezz", "Password": "qwerty123456"}`
@@ -28,7 +30,7 @@ func (s *APITestSuite) TestSignUp() {
 
 	r.Equal(http.StatusOK, resp.StatusCode)
 	r.Equal("Cheasezz", username)
-	r.Contains(fmt.Sprintf("%s", st), `{"accessToken":`)
+	r.Contains(string(st), `{"accessToken":`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 
 }
@@ -45,7 +47,7 @@ func (s *APITestSuite) TestSignIn() {
 	st, _ = io.ReadAll(resp.Body)
 
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Contains(fmt.Sprintf("%s", st), `{"accessToken":`)
+	r.Contains(string(st), `{"accessToken":`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 }
 
@@ -67,8 +69,9 @@ func (s *APITestSuite) TestLogOut() {
 	resp, err := http.DefaultClient.Do(req)
 	st, _ = io.ReadAll(resp.Body)
 
+	r.NoError(err)
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Equal(fmt.Sprintf("%s", st), `{"accessToken":""}`)
+	r.Equal(string(st), `{"accessToken":""}`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 	r.Empty(resp.Cookies()[0].Value)
 }
@@ -91,8 +94,9 @@ func (s *APITestSuite) TestRefreshAccessToken() {
 	resp, err := http.DefaultClient.Do(req)
 	st, _ = io.ReadAll(resp.Body)
 
+	r.NoError(err)
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Contains(fmt.Sprintf("%s", st), `{"accessToken":"`)
+	r.Contains(string(st), `{"accessToken":"`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 	r.NotEmpty(resp.Cookies()[0].Value)
 	r.NotEqual(resp.Cookies()[0].Value, s.userCookie)

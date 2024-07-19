@@ -34,15 +34,19 @@ func (r *AuthRepo) CreateUser(ctx context.Context, signUp core.SignUp) (string, 
 	query := fmt.Sprintf("INSERT INTO %s (name, username, password_hash) values ($1, $2, $3) RETURNING id", userTable)
 	row := tx.QueryRow(ctx, query, signUp.Name, signUp.Username, signUp.Password)
 	if err := row.Scan(&id); err != nil {
-		tx.Rollback(ctx)
+		if errR := tx.Rollback(ctx); errR != nil {
+			return "", errR
+		}
 		return "", err
 	}
 
 	createUserSessionQuery := fmt.Sprintf("INSERT INTO %s (user_id) values ($1)", userSessionTable)
 	_, err = tx.Exec(ctx, createUserSessionQuery, id)
 	if err != nil {
-		tx.Rollback(ctx)
-		return "", nil
+		if errR := tx.Rollback(ctx); errR != nil {
+			return "", errR
+		}
+		return "", err
 	}
 
 	return id, tx.Commit(ctx)

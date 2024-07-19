@@ -3,8 +3,6 @@ package integration_test
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"hash"
 	"io"
 	"net/http"
 	"testing"
@@ -32,11 +30,10 @@ type APITestSuite struct {
 	handlers *httpHandlers.Handlers
 	server   *httpserver.Server
 
-	hasher       hash.Hash
+	hasher       hasher.PasswordHasher
 	tokenManager auth.TokenManager
 	logger       logger.Logger
 
-	createUser bool
 	userCookie string
 }
 
@@ -78,6 +75,8 @@ func (s *APITestSuite) SetupSuite() {
 
 	server := httpserver.NewServer(cfg.HTTP, handlers.Init())
 	s.logger = l
+	s.hasher = hasher
+	s.tokenManager = tokenManager
 	s.db = psql
 	s.repos = repos
 	s.services = services
@@ -86,7 +85,10 @@ func (s *APITestSuite) SetupSuite() {
 
 }
 func (s *APITestSuite) SetupTest() {
-	s.db.Pool.Exec(context.Background(), "truncate users, users_sessions")
+	_, err := s.db.Pool.Exec(context.Background(), "truncate users, users_sessions")
+	if err != nil {
+		s.logger.Error("db exec error: %s", err.Error())
+	}
 	var username string
 	var st []byte
 
@@ -107,7 +109,7 @@ func (s *APITestSuite) SetupTest() {
 
 	r.Equal(http.StatusOK, resp.StatusCode)
 	r.Equal("Cheasezz", username)
-	r.Contains(fmt.Sprintf("%s", st), `{"accessToken":`)
+	r.Contains(string(st), `{"accessToken":`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 
 }
@@ -115,12 +117,10 @@ func (s *APITestSuite) TearDownTest() {
 
 }
 func (s *APITestSuite) TearDownSuite() {
-	s.server.Shutdown()
+	if err := s.server.Shutdown(); err != nil {
+		s.logger.Error("error occured on server shutting down: %s", err.Error())
+	}
 	s.db.Close()
-}
-
-func (s *APITestSuite) initDeps(psql *postgres.Postgres) {
-
 }
 
 func TestAPISuite(t *testing.T) {

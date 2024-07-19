@@ -77,7 +77,9 @@ func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tok
 	session.RefreshToken = tkns.Refresh.Token
 	session.ExpiresAt = tkns.Refresh.ExpiresAt
 
-	s.repo.SetSession(ctx, session)
+	if err = s.repo.SetSession(ctx, session); err != nil {
+		return auth.Tokens{}, err
+	}
 	return tkns, nil
 }
 
