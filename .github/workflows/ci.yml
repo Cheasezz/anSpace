@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    branches-ignore:
+      - 'main/.github'
 
 jobs:
   golangci-lint:
@@ -42,8 +44,8 @@ jobs:
       - name: Integration tests
         working-directory: backend
         run: "
-        docker-compose \
-        -f docker-compose.integration.yml up \
+          docker-compose \
+          -f docker-compose.integration.yml up \
           --build \
           --abort-on-container-exit \
           --exit-code-from integration"
