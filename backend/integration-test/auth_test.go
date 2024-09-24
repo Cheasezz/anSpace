@@ -101,3 +101,26 @@ func (s *APITestSuite) TestRefreshAccessToken() {
 	r.NotEmpty(resp.Cookies()[0].Value)
 	r.NotEqual(resp.Cookies()[0].Value, s.userCookie)
 }
+
+func (s *APITestSuite) TestMe() {
+	var st []byte
+
+	r := s.Require()
+
+	req, err := http.NewRequest("GET", "http://"+s.server.HttpServer.Addr+"/api/v1/auth/me", nil)
+	if err != nil {
+		s.logger.Error("http get error: %s", err.Error())
+	}
+
+	req.Header.Add("Authorization", s.accessToken)
+	req.AddCookie(&http.Cookie{
+		Name:  "RefreshToken",
+		Value: s.userCookie,
+	})
+
+	resp, err := http.DefaultClient.Do(req)
+	st, _ = io.ReadAll(resp.Body)
+
+	r.Equal(http.StatusOK, resp.StatusCode)
+	r.Equal(string(st), `{"user":"Cheasezz"}`)
+}

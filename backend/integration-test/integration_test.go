@@ -3,8 +3,10 @@ package integration_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/Cheasezz/anSpace/backend/config"
@@ -34,7 +36,8 @@ type APITestSuite struct {
 	tokenManager auth.TokenManager
 	logger       logger.Logger
 
-	userCookie string
+	userCookie  string
+	accessToken string
 }
 
 func (s *APITestSuite) SetupSuite() {
@@ -106,6 +109,7 @@ func (s *APITestSuite) SetupTest() {
 	}
 	st, _ = io.ReadAll(resp.Body)
 	s.userCookie = resp.Cookies()[0].Value
+	s.accessToken = fmt.Sprintf("Bearer %s", strings.Split(strings.Split(string(st), ":")[1], `"`)[1])
 
 	r.Equal(http.StatusOK, resp.StatusCode)
 	r.Equal("Cheasezz", username)
