@@ -17,7 +17,7 @@ test.integration: ### Run local integration tests
 	docker stop test-db
 
 compose-up-integration-test: ### Run docker-compose with integration tests
-	docker-compose -f docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from integration
+	docker compose -f docker-compose.integration.yml up --build --abort-on-container-exit --exit-code-from integration
 	
 gen:
 	mockgen -source=internal/repository/psql/auth.go -destination=internal/repository/psql/mocks/mock_auth_repo.go 
