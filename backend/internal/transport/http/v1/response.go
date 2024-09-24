@@ -17,6 +17,10 @@ type tokenResponse struct {
 	Access string `json:"accessToken"`
 }
 
+type userResponse struct {
+	User string `json:"user"`
+}
+
 const rtCookieName = "RefreshToken"
 
 func newErrorResponse(c *gin.Context, l logger.Logger, statusCode int, err error) {

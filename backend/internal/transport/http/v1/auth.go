@@ -32,6 +32,7 @@ func (h *Auth) initAuthRoutes(router *gin.RouterGroup) {
 		auth.POST("/signin", h.signIn)
 		auth.GET("/logout", h.logOut)
 		auth.POST("/refresh", h.refreshAccessToken)
+		auth.GET("/me", h.userIdentity, h.me)
 	}
 }
 
@@ -170,6 +171,36 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, tokenResponse{
 		Access: tokens.Access,
+	})
+}
+
+// @Tags auth
+// @Summary return curent username
+// @Description return curent username
+// @ID me
+// @Produce  json
+// @Success 200 {object} userResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /api/v1/me [get]
+func (h *Auth) me(c *gin.Context) {
+	usrId, err := getUserIdFrmCtx(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, errorResponse{
+			Message: err.Error(),
+		})
+		return
+	}
+	usrName, err := h.service.GetUser(c, usrId)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, errorResponse{
+			Message: err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, userResponse{
+		User: usrName,
 	})
 }
 

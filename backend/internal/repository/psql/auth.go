@@ -10,9 +10,10 @@ import (
 
 type Auth interface {
 	CreateUser(ctx context.Context, signUp core.SignUp) (string, error)
-	GetUser(ctx context.Context, signIn core.SignIn) (string, error)
+	GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error)
+	GetUserById(ctx context.Context, userId string) (string, error)
 	SetSession(ctx context.Context, session core.Session) error
-	GetByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
+	GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
 }
 
 type AuthRepo struct {
@@ -52,12 +53,20 @@ func (r *AuthRepo) CreateUser(ctx context.Context, signUp core.SignUp) (string, 
 	return id, tx.Commit(ctx)
 }
 
-func (r *AuthRepo) GetUser(ctx context.Context, signIn core.SignIn) (string, error) {
+func (r *AuthRepo) GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error) {
 	var userId string
 	query := fmt.Sprintf("SELECT id FROM %s WHERE username=$1 AND password_hash=$2", userTable)
 	err := r.db.Scany.Get(ctx, r.db.Pool, &userId, query, signIn.Username, signIn.Password)
 
 	return userId, err
+}
+
+func (r *AuthRepo) GetUserById(ctx context.Context, userId string) (string, error) {
+	var username string
+	query := fmt.Sprintf("SELECT username FROM %s WHERE id=$1", userTable)
+	err := r.db.Scany.Get(ctx, r.db.Pool, &username, query, userId)
+
+	return username, err
 }
 
 func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {
@@ -67,7 +76,7 @@ func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {
 	return err
 }
 
-func (r *AuthRepo) GetByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
+func (r *AuthRepo) GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
 	var session core.Session
 
 	query := fmt.Sprintf("SELECT user_id, expires_at, refresh_token FROM %s WHERE refresh_token=$1", userSessionTable)

@@ -55,34 +55,49 @@ func (mr *MockAuthMockRecorder) CreateUser(ctx, signUp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuth)(nil).CreateUser), ctx, signUp)
 }
 
-// GetByRefreshToken mocks base method.
-func (m *MockAuth) GetByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
+// GetUserById mocks base method.
+func (m *MockAuth) GetUserById(ctx context.Context, userId string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByRefreshToken", ctx, refreshToken)
-	ret0, _ := ret[0].(core.Session)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByRefreshToken indicates an expected call of GetByRefreshToken.
-func (mr *MockAuthMockRecorder) GetByRefreshToken(ctx, refreshToken any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByRefreshToken", reflect.TypeOf((*MockAuth)(nil).GetByRefreshToken), ctx, refreshToken)
-}
-
-// GetUser mocks base method.
-func (m *MockAuth) GetUser(ctx context.Context, signIn core.SignIn) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", ctx, signIn)
+	ret := m.ctrl.Call(m, "GetUserById", ctx, userId)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUser indicates an expected call of GetUser.
-func (mr *MockAuthMockRecorder) GetUser(ctx, signIn any) *gomock.Call {
+// GetUserById indicates an expected call of GetUserById.
+func (mr *MockAuthMockRecorder) GetUserById(ctx, userId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockAuth)(nil).GetUser), ctx, signIn)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockAuth)(nil).GetUserById), ctx, userId)
+}
+
+// GetUserByLogPas mocks base method.
+func (m *MockAuth) GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByLogPas", ctx, signIn)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByLogPas indicates an expected call of GetUserByLogPas.
+func (mr *MockAuthMockRecorder) GetUserByLogPas(ctx, signIn any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogPas", reflect.TypeOf((*MockAuth)(nil).GetUserByLogPas), ctx, signIn)
+}
+
+// GetUserByRefreshToken mocks base method.
+func (m *MockAuth) GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByRefreshToken", ctx, refreshToken)
+	ret0, _ := ret[0].(core.Session)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByRefreshToken indicates an expected call of GetUserByRefreshToken.
+func (mr *MockAuthMockRecorder) GetUserByRefreshToken(ctx, refreshToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByRefreshToken", reflect.TypeOf((*MockAuth)(nil).GetUserByRefreshToken), ctx, refreshToken)
 }
 
 // SetSession mocks base method.

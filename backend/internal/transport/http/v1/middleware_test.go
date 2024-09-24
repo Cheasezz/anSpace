@@ -131,7 +131,7 @@ func TestAuth_userIdentity(t *testing.T) {
 	}
 }
 
-func Test_getUserId(t *testing.T) {
+func Test_getUserIdFrmCtx(t *testing.T) {
 	var getContext = func(id string) *gin.Context {
 		c := &gin.Context{}
 		c.Set(userCtx, id)
@@ -156,7 +156,7 @@ func Test_getUserId(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			id, err := getUserId(tt.c)
+			id, err := getUserIdFrmCtx(tt.c)
 			if tt.fail {
 				require.Error(t, err)
 				require.EqualError(t, errUserIdNotFound, err.Error())

@@ -29,6 +29,7 @@ var (
 	errServiceSignIn             = fmt.Errorf("service sign in error")
 	errServiceLogOut             = fmt.Errorf("service logout error")
 	errServiceRefreshAccessToken = fmt.Errorf("service refreshAccessToken error")
+	errServiceGetUser            = fmt.Errorf("service getUser error")
 )
 
 func TestMain(m *testing.M) {
@@ -511,6 +512,67 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 			require.Equal(t, tt.expStatCode, w.Code)
 			require.Equal(t, w.Body.String(), tt.expReqBody)
 
+		})
+	}
+}
+
+func TestAuth_me(t *testing.T) {
+	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	authSrv := mock_service.NewMockAuth(ctrl)
+	tm := mock_auth.NewMockTokenManager(ctrl)
+	l := mock_logger.NewMockLogger(ctrl)
+
+	services := &service.Services{Auth: authSrv}
+	deps := initDeps(services, tm, l)
+	handler := NewAuthHandler(deps)
+
+	r := gin.New()
+	v1 := r.Group("/v1")
+	handler.initAuthRoutes(v1)
+
+	tests := []struct {
+		name         string
+		accessToken  string
+		expStatCode  int
+		expReqBody   string
+		mockBehavior mockBehavior
+	}{
+		{
+			name:        "ok",
+			accessToken: "acToken",
+			expStatCode: 200,
+			expReqBody:  fmt.Sprint(`{"user":"userName"}`),
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
+				tm.EXPECT().Parse(accessToken).Return("userId1", nil).Times(1)
+				s.EXPECT().GetUser(gomock.Any(), "userId1").Return("userName", nil).Times(1)
+			},
+		},
+		{
+			name:        "error service GetUser",
+			accessToken: "acToken",
+			expStatCode: 401,
+			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceGetUser),
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
+				tm.EXPECT().Parse(accessToken).Return("userId1", nil).Times(1)
+				s.EXPECT().GetUser(gomock.Any(), "userId1").Return("", errServiceGetUser).Times(1)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockBehavior(authSrv, l, tt.accessToken)
+
+			req := httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil)
+			req.Header.Add(authorizationHeader, fmt.Sprintf("Bearer %s", tt.accessToken))
+			w := httptest.NewRecorder()
+
+			r.ServeHTTP(w, req)
+
+			require.Equal(t, tt.expStatCode, w.Code)
+			require.Equal(t, w.Body.String(), tt.expReqBody)
 		})
 	}
 }

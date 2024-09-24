@@ -20,7 +20,8 @@ var (
 	errRepo                  = fmt.Errorf("repo error")
 	errNewJwt                = fmt.Errorf("new jwt error")
 	errNewRefreshToken       = fmt.Errorf("new refresh token error")
-	errRepoGetByRefreshToken = fmt.Errorf("repo get by refresh token error")
+	errRepoGetUserByRefreshToken = fmt.Errorf("repo get by refresh token error")
+	errRepoGetUserById       = fmt.Errorf("repo GetUserById error")
 	errRefreshTokenIsExpired = fmt.Errorf("tm refresh token is expired")
 )
 
@@ -142,7 +143,7 @@ func TestAuth_SignIn(t *testing.T) {
 			session:   core.Session{UserId: "1", RefreshToken: tokens.Refresh.Token, ExpiresAt: tokens.Refresh.ExpiresAt},
 			mockBehavior: func(d deps, i core.SignIn, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
-				d.r.EXPECT().GetUser(gomock.Any(), i).Return("1", nil)
+				d.r.EXPECT().GetUserByLogPas(gomock.Any(), i).Return("1", nil)
 				d.tm.EXPECT().NewJWT("1").Return(tokens.Access, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), s).Return(nil)
@@ -162,7 +163,7 @@ func TestAuth_SignIn(t *testing.T) {
 			expErr:    errRepo,
 			mockBehavior: func(d deps, i core.SignIn, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
-				d.r.EXPECT().GetUser(gomock.Any(), i).Return("", errRepo)
+				d.r.EXPECT().GetUserByLogPas(gomock.Any(), i).Return("", errRepo)
 
 			},
 		},
@@ -172,7 +173,7 @@ func TestAuth_SignIn(t *testing.T) {
 			expErr:    errNewJwt,
 			mockBehavior: func(d deps, i core.SignIn, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
-				d.r.EXPECT().GetUser(gomock.Any(), i).Return("1", nil)
+				d.r.EXPECT().GetUserByLogPas(gomock.Any(), i).Return("1", nil)
 				d.tm.EXPECT().NewJWT("1").Return("", errNewJwt)
 			},
 		},
@@ -182,7 +183,7 @@ func TestAuth_SignIn(t *testing.T) {
 			expErr:    errNewRefreshToken,
 			mockBehavior: func(d deps, i core.SignIn, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
-				d.r.EXPECT().GetUser(gomock.Any(), i).Return("1", nil)
+				d.r.EXPECT().GetUserByLogPas(gomock.Any(), i).Return("1", nil)
 				d.tm.EXPECT().NewJWT("1").Return(tokens.Access, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(auth.RTInfo{}, errNewRefreshToken)
 			},
@@ -194,7 +195,7 @@ func TestAuth_SignIn(t *testing.T) {
 			expErr:    errRepo,
 			mockBehavior: func(d deps, i core.SignIn, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
-				d.r.EXPECT().GetUser(gomock.Any(), i).Return("1", nil)
+				d.r.EXPECT().GetUserByLogPas(gomock.Any(), i).Return("1", nil)
 				d.tm.EXPECT().NewJWT("1").Return(tokens.Access, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), s).Return(errRepo)
@@ -246,7 +247,7 @@ func TestAuth_LogOut(t *testing.T) {
 			session:   initSession(),
 			expTokens: auth.Tokens{Refresh: auth.RTInfo{ExpiresAt: time.Now()}},
 			mockBehavior: func(d deps, rt string, s core.Session) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), rt).Return(s, nil)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), rt).Return(s, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any())
 			},
 		},
@@ -255,9 +256,9 @@ func TestAuth_LogOut(t *testing.T) {
 			rToken:    "token",
 			session:   core.Session{},
 			expTokens: auth.Tokens{Refresh: auth.RTInfo{ExpiresAt: time.Now()}},
-			expErr:    errRepoGetByRefreshToken,
+			expErr:    errRepoGetUserByRefreshToken,
 			mockBehavior: func(d deps, rt string, s core.Session) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), rt).Return(s, errRepoGetByRefreshToken)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), rt).Return(s, errRepoGetUserByRefreshToken)
 			},
 		},
 	}
@@ -306,7 +307,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			session:        initSession(),
 			dayUntilExpire: 20,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId).Return("newToken", nil)
 			},
@@ -317,7 +318,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			session:        initSession(),
 			dayUntilExpire: 5,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId).Return("newToken", nil)
 				d.tm.EXPECT().NewRefreshToken().Return(auth.RTInfo{Token: "newToken"}, nil)
@@ -328,9 +329,9 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			name:    "repo get by refresh token error",
 			tokens:  initTokens(),
 			session: core.Session{},
-			expErr:  errRepoGetByRefreshToken,
+			expErr:  errRepoGetUserByRefreshToken,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, errRepoGetByRefreshToken)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, errRepoGetUserByRefreshToken)
 			},
 		},
 		{
@@ -339,7 +340,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			session: initSession(),
 			expErr:  errRefreshTokenIsExpired,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(0, errRefreshTokenIsExpired)
 			},
 		},
@@ -350,7 +351,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			dayUntilExpire: 20,
 			expErr:         errNewJwt,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
+				d.r.EXPECT().GetUserByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId).Return("", errNewJwt)
 			},
@@ -367,6 +368,57 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotEqual(t, tt.tokens, tkns)
+			}
+		})
+	}
+}
+
+func TestAuthService_GetUser(t *testing.T) {
+	type mockBehavior func(d deps, userId string)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	hash := mock_hash.NewMockPasswordHasher(ctrl)
+	repo := mock_psql.NewMockAuth(ctrl)
+	tm := mock_auth.NewMockTokenManager(ctrl)
+	d := initDeps(hash, repo, tm)
+
+	authSrv := newAuthService(repo, hash, tm)
+
+	tests := []struct {
+		name         string
+		userId       string
+		expErr       error
+		mockBehavior mockBehavior
+	}{
+		{
+			name:   "ok",
+			userId: "userId",
+			expErr: nil,
+			mockBehavior: func(d deps, userId string) {
+				d.r.EXPECT().GetUserById(gomock.Any(), userId).Return("userName", nil).Times(1)
+			},
+		},
+		{
+			name:   "repo GetUserById error",
+			userId: "",
+			expErr: errRepoGetUserById,
+			mockBehavior: func(d deps, userId string) {
+				d.r.EXPECT().GetUserById(gomock.Any(), userId).Return("", errRepoGetUserById).Times(1)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockBehavior(d, tt.userId)
+			userName, err := authSrv.GetUser(context.Background(), tt.userId)
+			if err != nil {
+				require.Empty(t, userName)
+				require.Error(t, err)
+				require.EqualError(t, tt.expErr, err.Error())
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

@@ -14,9 +14,10 @@ const (
 )
 
 var (
-	errEmptyAuthHeader   = fmt.Errorf("empty auth header")
-	errInvalidAuthHeader = fmt.Errorf("invalid auth header")
-	errUserIdNotFound = fmt.Errorf("user id not found")
+	errEmptyAuthHeader      = fmt.Errorf("empty auth header")
+	errInvalidAuthHeader    = fmt.Errorf("invalid auth header")
+	errUserIdNotFound       = fmt.Errorf("user id not found")
+	errAccessTokenIsExpired = fmt.Errorf("Token is expired")
 )
 
 // Middleware for identify user with auth header
@@ -34,6 +35,10 @@ func (h *Auth) userIdentity(c *gin.Context) {
 
 	userId, err := h.TokenManager.Parse(headerParts[1])
 	if err != nil {
+		if err.Error() == errAccessTokenIsExpired.Error() {
+			newErrorResponse(c, h.log, http.StatusUnauthorized, err)
+			return
+		}
 		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
 		return
 	}
@@ -42,7 +47,7 @@ func (h *Auth) userIdentity(c *gin.Context) {
 }
 
 // This function return user id from gin context
-func getUserId(c *gin.Context) (string, error) {
+func getUserIdFrmCtx(c *gin.Context) (string, error) {
 	id, ok := c.Get(userCtx)
 	if !ok {
 		return "", errUserIdNotFound
