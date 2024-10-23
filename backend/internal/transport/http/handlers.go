@@ -21,7 +21,7 @@ func NewHandlers(d v1.Deps) *Handlers {
 
 func (h *Handlers) Init() *gin.Engine {
 	router := gin.New()
-	router.Use(gin.Recovery())
+	router.Use(gin.Recovery(), corsMiddleware(h.v1.Config.FrontendOrigin))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

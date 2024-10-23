@@ -18,6 +18,7 @@ type Config struct {
 type HTTP struct {
 	Host string `env-required:"true" yaml:"host" env:"HOST"`
 	Port string `env-required:"true" yaml:"port" env:"PORT"`
+	FrontendOrigin string `env-required:"true" yaml:"frontend_origin" env:"FRONTEND_ORIGIN"`
 }
 
 type PG struct {

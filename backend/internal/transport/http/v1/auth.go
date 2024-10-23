@@ -21,7 +21,7 @@ var (
 type Auth struct {
 	service      service.Auth
 	TokenManager auth.TokenManager
-	config       config.HTTP
+	Config       config.HTTP
 	log          logger.Logger
 }
 
@@ -40,7 +40,7 @@ func NewAuthHandler(d Deps) *Auth {
 	return &Auth{
 		service:      d.Services.Auth,
 		TokenManager: d.TokenManager,
-		config:       d.ConfigHTTP,
+		Config:       d.ConfigHTTP,
 		log:          d.Log,
 	}
 }
@@ -83,7 +83,7 @@ func (h *Auth) signUp(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tokens, h.config)
+	newTokenResponse(c, tokens, h.Config)
 }
 
 // @Tags auth
@@ -112,7 +112,7 @@ func (h *Auth) signIn(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tokens, h.config)
+	newTokenResponse(c, tokens, h.Config)
 }
 
 // @Tags auth
@@ -138,7 +138,7 @@ func (h *Auth) logOut(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tkns, h.config)
+	newTokenResponse(c, tkns, h.Config)
 }
 
 // @Tags auth
@@ -165,7 +165,7 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 	}
 
 	if tokens.Refresh.Token != "" {
-		newTokenResponse(c, tokens, h.config)
+		newTokenResponse(c, tokens, h.Config)
 		return
 	}
 
