@@ -6,14 +6,15 @@ import (
 
 	"github.com/Cheasezz/anSpace/backend/internal/core"
 	"github.com/Cheasezz/anSpace/backend/pkg/postgres"
+	"github.com/google/uuid"
 )
 
 type Auth interface {
-	CreateUser(ctx context.Context, signUp core.SignUp) (string, error)
-	GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error)
-	GetUserById(ctx context.Context, userId string) (string, error)
+	CreateUser(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error)
+	GetUserIdByLogPas(ctx context.Context, signIn core.AuthCredentials) (uuid.UUID, error)
+	GetUserById(ctx context.Context, userId uuid.UUID) (core.User, error)
 	SetSession(ctx context.Context, session core.Session) error
-	GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
+	GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
 }
 
 type AuthRepo struct {
@@ -24,49 +25,49 @@ func NewAuthPostgres(db *postgres.Postgres) *AuthRepo {
 	return &AuthRepo{db: db}
 }
 
-func (r *AuthRepo) CreateUser(ctx context.Context, signUp core.SignUp) (string, error) {
+func (r *AuthRepo) CreateUser(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
 	tx, err := r.db.Pool.Begin(ctx)
 	if err != nil {
-		return "", err
+		return uuid.UUID{}, err
 	}
 
-	var id string
+	var id uuid.UUID
 
-	query := fmt.Sprintf("INSERT INTO %s (name, username, password_hash) values ($1, $2, $3) RETURNING id", userTable)
-	row := tx.QueryRow(ctx, query, signUp.Name, signUp.Username, signUp.Password)
+	query := fmt.Sprintf("INSERT INTO %s (email, password_hash) values ($1, $2) RETURNING id", userTable)
+	row := tx.QueryRow(ctx, query, signUp.Email, signUp.Password)
 	if err := row.Scan(&id); err != nil {
 		if errR := tx.Rollback(ctx); errR != nil {
-			return "", errR
+			return uuid.UUID{}, errR
 		}
-		return "", err
+		return uuid.UUID{}, err
 	}
 
 	createUserSessionQuery := fmt.Sprintf("INSERT INTO %s (user_id) values ($1)", userSessionTable)
 	_, err = tx.Exec(ctx, createUserSessionQuery, id)
 	if err != nil {
 		if errR := tx.Rollback(ctx); errR != nil {
-			return "", errR
+			return uuid.UUID{}, errR
 		}
-		return "", err
+		return uuid.UUID{}, err
 	}
 
 	return id, tx.Commit(ctx)
 }
 
-func (r *AuthRepo) GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error) {
-	var userId string
-	query := fmt.Sprintf("SELECT id FROM %s WHERE username=$1 AND password_hash=$2", userTable)
-	err := r.db.Scany.Get(ctx, r.db.Pool, &userId, query, signIn.Username, signIn.Password)
+func (r *AuthRepo) GetUserIdByLogPas(ctx context.Context, signIn core.AuthCredentials) (uuid.UUID, error) {
+	var userId uuid.UUID
+	query := fmt.Sprintf("SELECT id FROM %s WHERE email=$1 AND password_hash=$2", userTable)
+	err := r.db.Scany.Get(ctx, r.db.Pool, &userId, query, signIn.Email, signIn.Password)
 
 	return userId, err
 }
 
-func (r *AuthRepo) GetUserById(ctx context.Context, userId string) (string, error) {
-	var username string
-	query := fmt.Sprintf("SELECT username FROM %s WHERE id=$1", userTable)
-	err := r.db.Scany.Get(ctx, r.db.Pool, &username, query, userId)
+func (r *AuthRepo) GetUserById(ctx context.Context, userId uuid.UUID) (core.User, error) {
+	var user core.User
+	query := fmt.Sprintf("SELECT * FROM %s WHERE id=$1", userTable)
+	err := r.db.Scany.Get(ctx, r.db.Pool, &user, query, userId)
 
-	return username, err
+	return user, err
 }
 
 func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {
@@ -76,7 +77,7 @@ func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {
 	return err
 }
 
-func (r *AuthRepo) GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
+func (r *AuthRepo) GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
 	var session core.Session
 
 	query := fmt.Sprintf("SELECT user_id, expires_at, refresh_token FROM %s WHERE refresh_token=$1", userSessionTable)

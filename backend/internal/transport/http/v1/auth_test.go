@@ -18,6 +18,7 @@ import (
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	mock_logger "github.com/Cheasezz/anSpace/backend/pkg/logger/mocks"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -40,7 +41,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func TestAuthHandler_validateLoginAndPass(t *testing.T) {
+func TestAuthHandler_validateEmailAndPass(t *testing.T) {
 	type args struct {
 		l string
 		p string
@@ -52,40 +53,48 @@ func TestAuthHandler_validateLoginAndPass(t *testing.T) {
 		expErr error
 	}{
 		{
-			name: "correct login and password",
+			name: "correct email and password",
 			args: args{
-				l: "kappa",
+				l: "kappa@gmail.com",
 				p: "qwerty123456",
 			},
 		},
 		{
-			name: "empty login after trim",
+			name: "empty email after trim",
 			args: args{
 				l: " ",
 				p: "qwerty123456",
 			},
-			expErr: errEmptyLoginOrPass,
+			expErr: errEmptyEmailOrPass,
 		},
 		{
 			name: "empty password after trim",
 			args: args{
-				l: "kappa",
+				l: "kappa@gmail.com",
 				p: " ",
 			},
-			expErr: errEmptyLoginOrPass,
+			expErr: errEmptyEmailOrPass,
 		},
 		{
 			name: "short password",
 			args: args{
-				l: "kappa",
+				l: "kappa@gmail.com",
 				p: "qwerty",
 			},
 			expErr: errShortPass,
 		},
+		{
+			name: "wrong domin name in email",
+			args: args{
+				l: "kappa@gm-ail.com",
+				p: "qwerty123456",
+			},
+			expErr: errIncorrectEmail,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.h.validateLoginAndPass(tt.args.l, tt.args.p)
+			err := tt.h.validateEmailAndPass(tt.args.l, tt.args.p)
 
 			if tt.expErr == nil {
 				require.NoError(t, err)
@@ -120,7 +129,7 @@ func initTokens() auth.Tokens {
 }
 
 func TestAuthHandler_signUp(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignUp, signIn core.SignIn)
+	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -135,107 +144,94 @@ func TestAuthHandler_signUp(t *testing.T) {
 	r := gin.New()
 	v1 := r.Group("/v1")
 	handler.initAuthRoutes(v1)
-
+	testUUID := uuid.New()
 	tests := []struct {
-		name         string
-		mockBehavior mockBehavior
-		inputBody    string
-		SignUp       core.SignUp
-		SignIn       core.SignIn
-		expStatCode  int
-		expReqBody   string
+		name            string
+		mockBehavior    mockBehavior
+		inputBody       string
+		AuthCredentials core.AuthCredentials
+		expStatCode     int
+		expReqBody      string
 	}{
 		{
-			name:      "OK",
-			inputBody: `{"name":"Iurii","username": "Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: "qwerty123456"},
-			SignIn:    core.SignIn{Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				s.EXPECT().SignUp(gomock.Any(), signUp).Return("fwfgq134", nil)
-				s.EXPECT().SignIn(gomock.Any(), signIn).Return(tokens, nil)
+			name:            "OK",
+			inputBody:       `{"email": "Cheasezz@gmail.com","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
+				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(testUUID, nil)
+				s.EXPECT().SignIn(gomock.Any(), AuthCredentials).Return(tokens, nil)
 			},
 			expStatCode: 200,
 			expReqBody:  fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
 		},
 		{
-			name:      "Bad request: empty username",
-			inputBody: `{"name":"Iurii","username": "","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
+			name:            "Bad request: empty email",
+			inputBody:       `{"email": "","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'SignUp.Username' Error:Field validation for 'Username' failed on the 'required' tag"}`,
+			expReqBody:  `{"message":"Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
 		},
 		{
-			name:      "Bad request: empty name",
-			inputBody: `{"name":"","username": "Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "", Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
+			name:            "Bad request: empty password",
+			inputBody:       `{"email": "Cheasezz@gmail.com","password":""}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: ""},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'SignUp.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+			expReqBody:  `{"message":"Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
 		},
 		{
-			name:      "Bad request: empty password",
-			inputBody: `{"name":"Iurii","username": "Cheasezz","password":""}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: ""},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				l.EXPECT().Error(gomock.Any())
+			name:            "Bad request: empty email after trim",
+			inputBody:       `{"email":" ","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: " ", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
+				l.EXPECT().Error(errEmptyEmailOrPass)
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'SignUp.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
+			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyEmailOrPass),
 		},
 		{
-			name:      "Bad request: empty login after trim",
-			inputBody: `{"name":"Iurii","username":" ","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: " ", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				l.EXPECT().Error(errEmptyLoginOrPass)
+			name:            "Bad request: empty passwrod after trim",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":" "}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: " "},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
+				l.EXPECT().Error(errEmptyEmailOrPass)
 			},
 			expStatCode: 400,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyLoginOrPass),
+			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyEmailOrPass),
 		},
 		{
-			name:      "Bad request: empty passwrod after trim",
-			inputBody: `{"name":"Iurii","username":"Cheasezz","password":" "}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: " "},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				l.EXPECT().Error(errEmptyLoginOrPass)
-			},
-			expStatCode: 400,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyLoginOrPass),
-		},
-		{
-			name:      "Bad request: password less then 12 char",
-			inputBody: `{"name":"Iurii","username":"Cheasezz","password":"qwerty12345"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: "qwerty12345"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
+			name:            "Bad request: password less then 12 char",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty12345"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty12345"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
 				l.EXPECT().Error(errShortPass)
 			},
 			expStatCode: 400,
 			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errShortPass),
 		},
 		{
-			name:      "Server error: Service Sign Up error",
-			inputBody: `{"name":"Iurii","username": "Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				s.EXPECT().SignUp(gomock.Any(), signUp).Return(" ", errServiceSignUp)
+			name:            "Server error: Service Sign Up error",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
+				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(uuid.UUID{}, errServiceSignUp)
 				l.EXPECT().Error(errServiceSignUp)
 			},
 			expStatCode: 500,
 			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceSignUp),
 		},
 		{
-			name:      "Server error: Service Sign In error",
-			inputBody: `{"name":"Iurii","username": "Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignUp{Name: "Iurii", Username: "Cheasezz", Password: "qwerty123456"},
-			SignIn:    core.SignIn{Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, signUp core.SignUp, signIn core.SignIn) {
-				s.EXPECT().SignUp(gomock.Any(), signUp).Return(" ", nil)
-				s.EXPECT().SignIn(gomock.Any(), signIn).Return(auth.Tokens{}, errServiceSignIn)
+			name:            "Server error: Service Sign In error",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
+				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(testUUID, nil)
+				s.EXPECT().SignIn(gomock.Any(), AuthCredentials).Return(auth.Tokens{}, errServiceSignIn)
 				l.EXPECT().Error(errServiceSignIn)
 			},
 			expStatCode: 500,
@@ -244,7 +240,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.SignUp, tt.SignIn)
+			tt.mockBehavior(authSrv, l, tt.AuthCredentials)
 
 			req := httptest.NewRequest(http.MethodPost, "/v1/auth/signup", bytes.NewBufferString(tt.inputBody))
 			w := httptest.NewRecorder()
@@ -258,7 +254,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 }
 
 func TestAuthHandler_signIn(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignIn)
+	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -275,48 +271,48 @@ func TestAuthHandler_signIn(t *testing.T) {
 	handler.initAuthRoutes(v1)
 
 	tests := []struct {
-		name         string
-		mockBehavior mockBehavior
-		inputBody    string
-		SignUp       core.SignIn
-		expStatCode  int
-		expReqBody   string
+		name            string
+		mockBehavior    mockBehavior
+		inputBody       string
+		AuthCredentials core.AuthCredentials
+		expStatCode     int
+		expReqBody      string
 	}{
 		{
-			name:      "OK",
-			inputBody: `{"username":"Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignIn{Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignIn) {
+			name:            "OK",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials) {
 				s.EXPECT().SignIn(gomock.Any(), input).Return(tokens, nil)
 			},
 			expStatCode: 200,
 			expReqBody:  fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
 		},
 		{
-			name:      "Bad request: empty username",
-			inputBody: `{"username":"","password":"qwerty123456"}`,
-			SignUp:    core.SignIn{Username: "", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignIn) {
+			name:            "Bad request: empty email",
+			inputBody:       `{"email":"","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'SignIn.Username' Error:Field validation for 'Username' failed on the 'required' tag"}`,
+			expReqBody:  `{"message":"Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
 		},
 		{
-			name:      "Bad request: empty password",
-			inputBody: `{"username":"Cheasezz","password":""}`,
-			SignUp:    core.SignIn{Username: "Cheasezz", Password: ""},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignIn) {
+			name:            "Bad request: empty password",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":""}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: ""},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'SignIn.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
+			expReqBody:  `{"message":"Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
 		},
 		{
-			name:      "Server error: Service Sign In error",
-			inputBody: `{"username":"Cheasezz","password":"qwerty123456"}`,
-			SignUp:    core.SignIn{Username: "Cheasezz", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.SignIn) {
+			name:            "Server error: Service Sign In error",
+			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
+			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials) {
 				s.EXPECT().SignIn(gomock.Any(), input).Return(auth.Tokens{}, errServiceSignIn)
 				l.EXPECT().Error(errServiceSignIn)
 			},
@@ -326,7 +322,7 @@ func TestAuthHandler_signIn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.SignUp)
+			tt.mockBehavior(authSrv, l, tt.AuthCredentials)
 
 			req := httptest.NewRequest(http.MethodPost, "/v1/auth/signin", bytes.NewBufferString(tt.inputBody))
 			w := httptest.NewRecorder()
@@ -532,22 +528,28 @@ func TestAuth_me(t *testing.T) {
 	r := gin.New()
 	v1 := r.Group("/v1")
 	handler.initAuthRoutes(v1)
-
+	testUUID := uuid.New()
 	tests := []struct {
-		name         string
-		accessToken  string
-		expStatCode  int
-		expReqBody   string
+		name        string
+		accessToken string
+		expStatCode int
+		expReqBody  string
+		// expErrReqBody string
 		mockBehavior mockBehavior
 	}{
 		{
 			name:        "ok",
 			accessToken: "acToken",
 			expStatCode: 200,
-			expReqBody:  fmt.Sprint(`{"user":"userName"}`),
+			expReqBody:  `{"user":{"email":"kappa@gmail.com","username":"qwertasd","passwordHash":"fj487sj"}}`,
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
-				tm.EXPECT().Parse(accessToken).Return("userId1", nil).Times(1)
-				s.EXPECT().GetUser(gomock.Any(), "userId1").Return("userName", nil).Times(1)
+				tm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
+				s.EXPECT().GetUser(gomock.Any(), testUUID).Return(core.User{
+					Id:           testUUID,
+					Email:        "kappa@gmail.com",
+					Username:     "qwertasd",
+					PasswordHash: "fj487sj",
+				}, nil).Times(1)
 			},
 		},
 		{
@@ -556,8 +558,8 @@ func TestAuth_me(t *testing.T) {
 			expStatCode: 401,
 			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceGetUser),
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
-				tm.EXPECT().Parse(accessToken).Return("userId1", nil).Times(1)
-				s.EXPECT().GetUser(gomock.Any(), "userId1").Return("", errServiceGetUser).Times(1)
+				tm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
+				s.EXPECT().GetUser(gomock.Any(), testUUID).Return(core.User{}, errServiceGetUser).Times(1)
 			},
 		},
 	}

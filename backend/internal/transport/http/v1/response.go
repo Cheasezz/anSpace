@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Cheasezz/anSpace/backend/config"
+	"github.com/Cheasezz/anSpace/backend/internal/core"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ type tokenResponse struct {
 }
 
 type userResponse struct {
-	User string `json:"user"`
+	User core.User `json:"user"`
 }
 
 const rtCookieName = "RefreshToken"

@@ -1,6 +1,7 @@
 http:
   host: "localhost"
   port: "8080"
+  frontend_origin: "http://localhost:5173"
 
 pg:
   pool_max: 15

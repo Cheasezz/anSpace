@@ -8,14 +8,15 @@ import (
 	"github.com/Cheasezz/anSpace/backend/internal/repository/psql"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
 	"github.com/Cheasezz/anSpace/backend/pkg/hasher"
+	"github.com/google/uuid"
 )
 
 type Auth interface {
-	SignUp(ctx context.Context, signUp core.SignUp) (string, error)
-	SignIn(ctx context.Context, signIn core.SignIn) (auth.Tokens, error)
+	SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error)
+	SignIn(ctx context.Context, signIn core.AuthCredentials) (auth.Tokens, error)
 	LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error)
 	RefreshAccessToken(ctx context.Context, refreshToken string) (auth.Tokens, error)
-	GetUser(ctx context.Context, userId string) (string, error)
+	GetUser(ctx context.Context, userId uuid.UUID) (core.User, error)
 }
 
 var (
@@ -39,10 +40,10 @@ func newAuthService(r psql.Auth, h hasher.PasswordHasher, tm auth.TokenManager) 
 // Hash password and write new user into db.
 // With method repo.CreateUser.
 // Return userId and error.
-func (s *AuthService) SignUp(ctx context.Context, signUp core.SignUp) (string, error) {
+func (s *AuthService) SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
 	pass, err := s.hasher.Hash(signUp.Password)
 	if err != nil {
-		return "", err
+		return uuid.UUID{}, err
 	}
 	signUp.Password = pass
 	userId, err := s.repo.CreateUser(ctx, signUp)
@@ -52,13 +53,13 @@ func (s *AuthService) SignUp(ctx context.Context, signUp core.SignUp) (string, e
 // Hash password and search ind db userId with method repo.GetUser.
 // Pass userId into createSession method.
 // Return auth.Tokens and error.
-func (s *AuthService) SignIn(ctx context.Context, signIn core.SignIn) (auth.Tokens, error) {
+func (s *AuthService) SignIn(ctx context.Context, signIn core.AuthCredentials) (auth.Tokens, error) {
 	pass, err := s.hasher.Hash(signIn.Password)
 	if err != nil {
 		return auth.Tokens{}, err
 	}
 	signIn.Password = pass
-	userId, err := s.repo.GetUserByLogPas(ctx, signIn)
+	userId, err := s.repo.GetUserIdByLogPas(ctx, signIn)
 	if err != nil {
 		return auth.Tokens{}, err
 	}
@@ -71,7 +72,7 @@ func (s *AuthService) SignIn(ctx context.Context, signIn core.SignIn) (auth.Toke
 func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error) {
 
 	tkns := auth.Tokens{Access: "", Refresh: auth.RTInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}}
-	session, err := s.repo.GetUserByRefreshToken(ctx, refreshToken)
+	session, err := s.repo.GetUserSessionByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return tkns, err
 	}
@@ -87,13 +88,13 @@ func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tok
 // Generate new jwt and refresh tokens, create new core.Session struct.
 // And write this session in repo by repo.SetSession method.
 // Return auth.Tokens and error.
-func (s *AuthService) createSession(ctx context.Context, userId string) (auth.Tokens, error) {
+func (s *AuthService) createSession(ctx context.Context, userId uuid.UUID) (auth.Tokens, error) {
 	var (
 		tokens auth.Tokens
 		err    error
 	)
 
-	tokens.Access, err = s.tokenManager.NewJWT(userId)
+	tokens.Access, err = s.tokenManager.NewJWT(userId.String())
 	if err != nil {
 		return auth.Tokens{}, err
 	}
@@ -126,7 +127,7 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 		tokens auth.Tokens
 	)
 
-	session, err := s.repo.GetUserByRefreshToken(ctx, refreshToken)
+	session, err := s.repo.GetUserSessionByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return tokens, err
 	}
@@ -139,7 +140,7 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	if rtDayUntilExpire <= daysForUpdRtToken {
 		return s.createSession(ctx, session.UserId)
 	}
-	tokens.Access, err = s.tokenManager.NewJWT(session.UserId)
+	tokens.Access, err = s.tokenManager.NewJWT(session.UserId.String())
 	if err != nil {
 		return auth.Tokens{}, err
 	}
@@ -147,11 +148,11 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	return tokens, nil
 }
 
-// Return username by userid
-func (s *AuthService) GetUser(c context.Context, userId string) (string, error) {
-	usrName, err := s.repo.GetUserById(c, userId)
+// Return user by userid
+func (s *AuthService) GetUser(c context.Context, userId uuid.UUID) (core.User, error) {
+	user, err := s.repo.GetUserById(c, userId)
 	if err != nil {
-		return "", err
+		return core.User{}, err
 	}
-	return usrName, nil
+	return user, nil
 }

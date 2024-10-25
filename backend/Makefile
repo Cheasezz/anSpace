@@ -1,8 +1,8 @@
 db-up::
-	docker run --name=todo-db -e POSTGRES_PASSWORD=qwerty -p 5432:5432 -d --rm postgres
+	docker run --name=test-db -e POSTGRES_PASSWORD=qwerty -p 5432:5432 -d --rm postgres
 
 test:
-	go test -v -short -count=1 ./...
+	go test -v -short -count=1 -failfast ./...
 
 test100:
 	go test -v -short -count=100 ./...

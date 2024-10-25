@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 const (
@@ -47,11 +48,14 @@ func (h *Auth) userIdentity(c *gin.Context) {
 }
 
 // This function return user id from gin context
-func getUserIdFrmCtx(c *gin.Context) (string, error) {
+func getUserIdFrmCtx(c *gin.Context) (uuid.UUID, error) {
 	id, ok := c.Get(userCtx)
 	if !ok {
-		return "", errUserIdNotFound
+		return uuid.UUID{}, errUserIdNotFound
 	}
-
-	return id.(string), nil
+	parsedId, err := uuid.Parse(id.(string))
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return parsedId, nil
 }

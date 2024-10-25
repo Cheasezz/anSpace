@@ -13,15 +13,15 @@ func (s *APITestSuite) TestSignUp() {
 		s.logger.Error("db exec error: %s", err.Error())
 	}
 
-	var username string
-	inputBody := `{"Name": "Iurii", "Username": "Cheasezz", "Password": "qwerty123456"}`
+	var email string
+	inputBody := `{"Email": "Cheasezz@gmail.com", "Password": "qwerty123456"}`
 	r := s.Require()
 
 	resp, err := http.Post("http://"+s.server.HttpServer.Addr+"/api/v1/auth/signup", "json", bytes.NewBufferString(inputBody))
 	if err != nil {
 		s.logger.Error("http post error: %s", err.Error())
 	}
-	err = s.db.Scany.Get(context.Background(), s.db.Pool, &username, `select username from users where username='Cheasezz' and name='Iurii'`)
+	err = s.db.Scany.Get(context.Background(), s.db.Pool, &email, `select email from users where email='Cheasezz@gmail.com'`)
 	if err != nil {
 		s.logger.Error("FromTestSignUp db scany get error: %s", err.Error())
 	}
@@ -29,14 +29,14 @@ func (s *APITestSuite) TestSignUp() {
 	st, _ = io.ReadAll(resp.Body)
 
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Equal("Cheasezz", username)
+	r.Equal("Cheasezz@gmail.com", email)
 	r.Contains(string(st), `{"accessToken":`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 
 }
 
 func (s *APITestSuite) TestSignIn() {
-	inputSignIn := `{"Username": "Cheasezz", "Password": "qwerty123456"}`
+	inputSignIn := `{"Email": "Cheasezz@gmail.com", "Password": "qwerty123456"}`
 	r := s.Require()
 
 	resp, err := http.Post("http://"+s.server.HttpServer.Addr+"/api/v1/auth/signin", "json", bytes.NewBufferString(inputSignIn))
@@ -122,5 +122,5 @@ func (s *APITestSuite) TestMe() {
 	st, _ = io.ReadAll(resp.Body)
 
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Equal(string(st), `{"user":"Cheasezz"}`)
+	r.Contains(string(st), `{"user":{"email":"Cheasezz@gmail.com",`)
 }

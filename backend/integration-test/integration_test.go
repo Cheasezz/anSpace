@@ -92,10 +92,10 @@ func (s *APITestSuite) SetupTest() {
 	if err != nil {
 		s.logger.Error("db exec error: %s", err.Error())
 	}
-	var username string
+	var email string
 	var st []byte
 
-	inputSignUp := `{"Name": "Iurii", "Username": "Cheasezz", "Password": "qwerty123456"}`
+	inputSignUp := `{"Email": "Cheasezz@gmail.com", "Password": "qwerty123456"}`
 	r := s.Require()
 
 	// SignUp for create new user before test every handlers
@@ -103,7 +103,7 @@ func (s *APITestSuite) SetupTest() {
 	if err != nil {
 		s.logger.Error("http post signup error: %s", err.Error())
 	}
-	err = s.db.Scany.Get(context.Background(), s.db.Pool, &username, `select username from users where username='Cheasezz' and name='Iurii'`)
+	err = s.db.Scany.Get(context.Background(), s.db.Pool, &email, `select email from users where email='Cheasezz@gmail.com'`)
 	if err != nil {
 		s.logger.Error("FromTestSignUp db scany get error: %s", err.Error())
 	}
@@ -112,7 +112,7 @@ func (s *APITestSuite) SetupTest() {
 	s.accessToken = fmt.Sprintf("Bearer %s", strings.Split(strings.Split(string(st), ":")[1], `"`)[1])
 
 	r.Equal(http.StatusOK, resp.StatusCode)
-	r.Equal("Cheasezz", username)
+	r.Equal("Cheasezz@gmail.com", email)
 	r.Contains(string(st), `{"accessToken":`)
 	r.Equal(resp.Cookies()[0].Name, "RefreshToken")
 

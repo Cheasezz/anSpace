@@ -15,6 +15,7 @@ import (
 
 	core "github.com/Cheasezz/anSpace/backend/internal/core"
 	auth "github.com/Cheasezz/anSpace/backend/pkg/auth"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +43,10 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 }
 
 // GetUser mocks base method.
-func (m *MockAuth) GetUser(ctx context.Context, userId string) (string, error) {
+func (m *MockAuth) GetUser(ctx context.Context, userId uuid.UUID) (core.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUser", ctx, userId)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(core.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -87,7 +88,7 @@ func (mr *MockAuthMockRecorder) RefreshAccessToken(ctx, refreshToken any) *gomoc
 }
 
 // SignIn mocks base method.
-func (m *MockAuth) SignIn(ctx context.Context, signIn core.SignIn) (auth.Tokens, error) {
+func (m *MockAuth) SignIn(ctx context.Context, signIn core.AuthCredentials) (auth.Tokens, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SignIn", ctx, signIn)
 	ret0, _ := ret[0].(auth.Tokens)
@@ -102,10 +103,10 @@ func (mr *MockAuthMockRecorder) SignIn(ctx, signIn any) *gomock.Call {
 }
 
 // SignUp mocks base method.
-func (m *MockAuth) SignUp(ctx context.Context, signUp core.SignUp) (string, error) {
+func (m *MockAuth) SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SignUp", ctx, signUp)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -10,6 +10,7 @@ import (
 	mock_auth "github.com/Cheasezz/anSpace/backend/pkg/auth/mocks"
 	mock_logger "github.com/Cheasezz/anSpace/backend/pkg/logger/mocks"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -132,21 +133,22 @@ func TestAuth_userIdentity(t *testing.T) {
 }
 
 func Test_getUserIdFrmCtx(t *testing.T) {
-	var getContext = func(id string) *gin.Context {
+	var getContext = func(id uuid.UUID) *gin.Context {
 		c := &gin.Context{}
-		c.Set(userCtx, id)
+		c.Set(userCtx, id.String())
 		return c
 	}
+	testUUID := uuid.New()
 	tests := []struct {
 		name string
 		c    *gin.Context
-		id   string
+		id   uuid.UUID
 		fail bool
 	}{
 		{
 			name: "OK",
-			c:    getContext("1"),
-			id:   "1",
+			c:    getContext(testUUID),
+			id:   testUUID,
 		},
 		{
 			name: "Empty",

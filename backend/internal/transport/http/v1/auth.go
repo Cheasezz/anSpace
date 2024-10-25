@@ -10,12 +10,14 @@ import (
 	"github.com/Cheasezz/anSpace/backend/internal/service"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	errEmptyLoginOrPass = fmt.Errorf("all fields must be completed")
+	errEmptyEmailOrPass = fmt.Errorf("all fields must be completed")
 	errShortPass        = fmt.Errorf("password must be more than 11 characters")
+	errIncorrectEmail   = fmt.Errorf("incorrect email")
 )
 
 type Auth struct {
@@ -58,14 +60,14 @@ func NewAuthHandler(d Deps) *Auth {
 // @Failure default {object} errorResponse
 // @Router /api/v1/auth/sign-up [post]
 func (h *Auth) signUp(c *gin.Context) {
-	var input core.SignUp
+	var input core.AuthCredentials
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := h.validateLoginAndPass(input.Username, input.Password); err != nil {
+	if err := h.validateEmailAndPass(input.Email, input.Password); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)
 		return
 	}
@@ -76,8 +78,7 @@ func (h *Auth) signUp(c *gin.Context) {
 		return
 	}
 
-	inputSignIn := core.SignIn{Username: input.Username, Password: input.Password}
-	tokens, err := h.service.SignIn(c, inputSignIn)
+	tokens, err := h.service.SignIn(c, input)
 	if err != nil {
 		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
 		return
@@ -99,9 +100,14 @@ func (h *Auth) signUp(c *gin.Context) {
 // @Failure default {object} errorResponse
 // @Router /api/v1/auth/sign-in [post]
 func (h *Auth) signIn(c *gin.Context) {
-	var input core.SignIn
+	var input core.AuthCredentials
 
 	if err := c.ShouldBindJSON(&input); err != nil {
+		newErrorResponse(c, h.log, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := h.validateEmailAndPass(input.Email, input.Password); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)
 		return
 	}
@@ -192,7 +198,7 @@ func (h *Auth) me(c *gin.Context) {
 		})
 		return
 	}
-	usrName, err := h.service.GetUser(c, usrId)
+	user, err := h.service.GetUser(c, usrId)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, errorResponse{
 			Message: err.Error(),
@@ -200,22 +206,25 @@ func (h *Auth) me(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, userResponse{
-		User: usrName,
+		User: user,
 	})
 }
 
-func (h *Auth) validateLoginAndPass(l string, p string) error {
+func (h *Auth) validateEmailAndPass(e string, p string) error {
 	var (
-		trimL = strings.TrimSpace(l)
+		trimE = strings.TrimSpace(e)
 		trimP = strings.TrimSpace(p)
 	)
 
-	if len(trimL) == 0 || len(trimP) == 0 {
-		return errEmptyLoginOrPass
+	if len(trimE) == 0 || len(trimP) == 0 {
+		return errEmptyEmailOrPass
 	}
 
-	if len([]rune(trimP)) < 12 {
+	if ok := govalidator.MinStringLength(trimP, "12"); !ok {
 		return errShortPass
+	}
+	if ok := govalidator.IsExistingEmail(trimE); !ok {
+		return errIncorrectEmail
 	}
 	return nil
 }

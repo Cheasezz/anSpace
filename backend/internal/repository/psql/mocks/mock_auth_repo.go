@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	core "github.com/Cheasezz/anSpace/backend/internal/core"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,10 +42,10 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockAuth) CreateUser(ctx context.Context, signUp core.SignUp) (string, error) {
+func (m *MockAuth) CreateUser(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, signUp)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,10 +57,10 @@ func (mr *MockAuthMockRecorder) CreateUser(ctx, signUp any) *gomock.Call {
 }
 
 // GetUserById mocks base method.
-func (m *MockAuth) GetUserById(ctx context.Context, userId string) (string, error) {
+func (m *MockAuth) GetUserById(ctx context.Context, userId uuid.UUID) (core.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserById", ctx, userId)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(core.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,34 +71,34 @@ func (mr *MockAuthMockRecorder) GetUserById(ctx, userId any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockAuth)(nil).GetUserById), ctx, userId)
 }
 
-// GetUserByLogPas mocks base method.
-func (m *MockAuth) GetUserByLogPas(ctx context.Context, signIn core.SignIn) (string, error) {
+// GetUserIdByLogPas mocks base method.
+func (m *MockAuth) GetUserIdByLogPas(ctx context.Context, signIn core.AuthCredentials) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByLogPas", ctx, signIn)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "GetUserIdByLogPas", ctx, signIn)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserByLogPas indicates an expected call of GetUserByLogPas.
-func (mr *MockAuthMockRecorder) GetUserByLogPas(ctx, signIn any) *gomock.Call {
+// GetUserIdByLogPas indicates an expected call of GetUserIdByLogPas.
+func (mr *MockAuthMockRecorder) GetUserIdByLogPas(ctx, signIn any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogPas", reflect.TypeOf((*MockAuth)(nil).GetUserByLogPas), ctx, signIn)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserIdByLogPas", reflect.TypeOf((*MockAuth)(nil).GetUserIdByLogPas), ctx, signIn)
 }
 
-// GetUserByRefreshToken mocks base method.
-func (m *MockAuth) GetUserByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
+// GetUserSessionByRefreshToken mocks base method.
+func (m *MockAuth) GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByRefreshToken", ctx, refreshToken)
+	ret := m.ctrl.Call(m, "GetUserSessionByRefreshToken", ctx, refreshToken)
 	ret0, _ := ret[0].(core.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetUserByRefreshToken indicates an expected call of GetUserByRefreshToken.
-func (mr *MockAuthMockRecorder) GetUserByRefreshToken(ctx, refreshToken any) *gomock.Call {
+// GetUserSessionByRefreshToken indicates an expected call of GetUserSessionByRefreshToken.
+func (mr *MockAuthMockRecorder) GetUserSessionByRefreshToken(ctx, refreshToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByRefreshToken", reflect.TypeOf((*MockAuth)(nil).GetUserByRefreshToken), ctx, refreshToken)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSessionByRefreshToken", reflect.TypeOf((*MockAuth)(nil).GetUserSessionByRefreshToken), ctx, refreshToken)
 }
 
 // SetSession mocks base method.
