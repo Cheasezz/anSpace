@@ -1,0 +1,18 @@
+.main {
+  position: relative;
+  display: flex;
+  justify-content: end;
+  width: 100%;
+  height: 100lvh;
+  overflow: hidden;
+
+  @media only screen and (max-width: 1368px) {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.picture{
+  filter: brightness(70%)
+}

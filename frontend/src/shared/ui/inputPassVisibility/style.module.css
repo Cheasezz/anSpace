@@ -1,0 +1,39 @@
+.div {
+  position: absolute;
+  height: 1.3rem;
+  top: 35%;
+  right: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .div:hover {
+    cursor: pointer;
+    .svg.open {
+      path {
+        stroke: var(--primary-color);
+      }
+    }
+    .svg.close {
+      path {
+        stroke: var(--white-color);
+      }
+    }
+  }
+}
+
+svg {
+  path {
+    transition: all 150ms;
+    stroke-width: 1.1;
+  }
+}
+.open {
+  path {
+    stroke: var(--white-color);
+  }
+}
+
+.close {
+  path {
+    stroke: var(--primary-color);
+  }
+}

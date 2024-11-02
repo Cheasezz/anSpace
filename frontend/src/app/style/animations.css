@@ -1,0 +1,18 @@
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--primary-color);
+  transition:
+    opacity 120ms,
+    transform 120ms;
+  transform: translate3d(-101%, 0, 0);
+}
+
+.animated-underline:hover::after,
+.animated-underline:focus::after {
+  transform: translate3d(0, 0, 0);
+}

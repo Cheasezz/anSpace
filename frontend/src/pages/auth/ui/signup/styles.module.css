@@ -1,0 +1,16 @@
+.span {
+  position: relative;
+  margin-left: 8px;
+  color: var(--primary-color);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.flexRow {
+  display: flex;
+  margin-bottom: auto;
+}
+
+.button {
+  margin-top: auto;
+}

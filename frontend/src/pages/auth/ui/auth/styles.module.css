@@ -1,0 +1,20 @@
+.container {
+  position: relative;
+  width: 19rem;
+  height: 15rem;
+  top: 20%;
+  left: -15%;
+  background-color: var(--black-color);
+  border-radius: 20px;
+
+  @media only screen and (max-width: 1368px) {
+    top: 0;
+    left: 0;
+    height: 16.5rem;
+  }
+
+  @media only screen and (max-width: 512px) {
+    width: 15rem;
+    height: 18rem;
+  }
+}

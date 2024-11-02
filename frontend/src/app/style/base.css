@@ -1,0 +1,115 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesansprobold.ttf) format('truetype');
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesansprobold.woff) format('woff');
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesansprobold.woff2) format('woff2');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesanspro.ttf) format('truetype');
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesanspro.woff) format('woff');
+  src: url(../../shared/ui/fonts/sourceSansPro/sourcesanspro.woff2) format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url(../../shared/ui/fonts/PlusJakartaSans/PlusJakartaSans-Bold.ttf) format('truetype');
+  src: url(../../shared/ui/fonts/PlusJakartaSans/PlusJakartaSans-Bold.woff) format('woff');
+  src: url(../../shared/ui/fonts/PlusJakartaSans/PlusJakartaSans-Bold.woff2) format('woff2');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-size: clamp(20px, calc(1vh + 1vw), 64px);
+}
+
+h1,
+p,
+span,
+label,
+input,
+button {
+  font-family: 'Source Sans Pro', serif;
+  color: var(--white-color);
+}
+h1 {
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+p {
+  font-weight: 400;
+  font-size: 0.7rem;
+}
+
+span {
+  font-weight: 400;
+  font-size: 0.7rem;
+}
+
+label {
+  font-weight: 400;
+  font-size: 0.55rem;
+  letter-spacing: 1px;
+}
+
+label,
+label:focus-within {
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--white-color);
+    -webkit-box-shadow: 0 0 20px 30px var(--black-color) inset;
+    transition: background-color 60000s ease-in-out 0s;
+  }
+}
+
+input {
+  font-weight: 400;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+button {
+  padding: 0.3rem 0.9rem;
+  font-weight: 400;
+  font-size: 0.6rem;
+  background-color: inherit;
+  cursor: pointer;
+}
+
+form {
+  height: 100%;
+  width: 100%;
+  padding: 1rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+picture {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
