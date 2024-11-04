@@ -24,6 +24,9 @@ func (h *Handlers) Init() *gin.Engine {
 	router.Use(gin.Recovery(), corsMiddleware(h.v1.Config.FrontendOrigin))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.NoRoute(func(c *gin.Context) {
+		c.JSON(404, v1.ErrorResponse{Message: "Page not found"})
+	})
 
 	api := router.Group("/api")
 	{

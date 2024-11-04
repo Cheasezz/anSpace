@@ -193,16 +193,12 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 func (h *Auth) me(c *gin.Context) {
 	usrId, err := getUserIdFrmCtx(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, errorResponse{
-			Message: err.Error(),
-		})
+		newErrorResponse(c, h.log, http.StatusUnauthorized, err)
 		return
 	}
 	user, err := h.service.GetUser(c, usrId)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, errorResponse{
-			Message: err.Error(),
-		})
+		newErrorResponse(c, h.log, http.StatusUnauthorized, err)
 		return
 	}
 	c.JSON(http.StatusOK, userResponse{

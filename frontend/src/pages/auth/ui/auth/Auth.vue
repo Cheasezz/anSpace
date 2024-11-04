@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import styles from './styles.module.css'
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import Signin from '../signin/Signin.vue'
 import Signup from '../signup/Signup.vue'
 import { MainWithSpaceBg } from '@/shared/ui'
 
-const inOrUp: Ref<string> = ref('signin')
+const inOrUp = ref<string>('signin')
 </script>
 
 <template>

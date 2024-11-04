@@ -13,7 +13,7 @@ hasher:
 
 token_manager:
   signing_key: "qqvgfg5jk3fwioi2ifsd"
-  atttl: 15m
+  atttl: 5s
   rtttl: 43800m
 
 logger:

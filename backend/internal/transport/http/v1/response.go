@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type errorResponse struct {
+type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
@@ -26,7 +26,7 @@ const rtCookieName = "RefreshToken"
 
 func newErrorResponse(c *gin.Context, l logger.Logger, statusCode int, err error) {
 	l.Error(err)
-	c.AbortWithStatusJSON(statusCode, errorResponse{err.Error()})
+	c.AbortWithStatusJSON(statusCode, ErrorResponse{err.Error()})
 }
 
 func newTokenResponse(c *gin.Context, t auth.Tokens, cfg config.HTTP) {

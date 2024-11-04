@@ -6,7 +6,7 @@ import {
   RequestError,
   type TFetchResponse,
 } from 'feature-fetch'
-import type { TErrorResponce } from '../types'
+import type { TErrorResponce } from './types'
 
 export function errorCheck(res: TFetchResponse<unknown, TErrorResponce, 'json'>) {
   if (res.isErr()) {
@@ -21,11 +21,11 @@ export function errorCheck(res: TFetchResponse<unknown, TErrorResponce, 'json'>)
       throw new Error(`Сетевая ошибка: ${error.message}`)
     } else if (error instanceof RequestError) {
       console.error('Request error:', error.message, 'Status:', error.status)
-
-      throw new Error(`Ошибка запроса: ${(error.data as TErrorResponce).message}`)
+      const errResp = (error.data as TErrorResponce).message
+      throw new Error(`Ошибка запроса: ${errResp}`)
     } else if (error instanceof FetchError) {
       console.error('Service error:', error.message)
-      throw new Error(`Ошибка сервера: ${error.message}`)
+      throw new Error(`Ошибка сервиса: ${error.message}`)
     } else {
       console.error('Unexpected error:', error)
       throw new Error(`Неизвестная ошибка: ${error}`)
