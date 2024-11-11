@@ -12,7 +12,7 @@ const fetchClient = createApiFetchClient({
   headers: {
     'Content-Type': 'application/json',
   },
-  fetchProps: { credentials: 'include' },
+  fetchProps: { credentials: 'include', },
 })
 
 export async function POST<T>(params: TPostParams): Promise<T> {

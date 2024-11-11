@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func corsMiddleware(origin string) gin.HandlerFunc {
+func corsMiddleware(origins []string) gin.HandlerFunc {
 	corsMdlwr := cors.New(cors.Config{
-		AllowOrigins: []string{origin},
+		AllowOrigins: origins,
 		AllowMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
@@ -23,5 +23,6 @@ func corsMiddleware(origin string) gin.HandlerFunc {
 		AllowCredentials: true,
 		MaxAge:           24 * time.Hour,
 	})
+	
 	return corsMdlwr
 }

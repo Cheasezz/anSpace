@@ -1,15 +1,24 @@
 <script lang="ts" setup>
+import type { InputHTMLAttributes, InputTypeHTMLAttribute, PropType } from 'vue'
 import styles from './styles.module.css'
 
-const { inputType = 'text' } = defineProps<{
-  labelText?: string
-  inputType?: string
-  tabIndex?: number
-  autoComplete?: string
-  inputName?: string
-  withError?: boolean
-  errorMessage?: string
-}>()
+defineProps({
+  labelText: String,
+  inputType: {
+    type: String as PropType<InputTypeHTMLAttribute>,
+    default: 'text',
+  },
+  tabIndex: Number,
+  autoComplete: {
+    type: String as PropType<InputHTMLAttributes['autocomplete']>,
+    default: 'off',
+  },
+  inputName: {
+    type: String as PropType<InputHTMLAttributes['name']>,
+  },
+  withError: Boolean,
+  errorMessage: String,
+})
 
 const model = defineModel<string>()
 
@@ -29,7 +38,12 @@ function disableAutoSelectedText(input: HTMLInputElement) {
       <input
         v-model.trim="model"
         :tabindex="tabIndex"
-        :class="[styles.input]"
+        :class="[
+          styles.input,
+          {
+            [styles.err]: errorMessage,
+          },
+        ]"
         :type="inputType"
         :autocomplete="autoComplete"
         :name="inputName"

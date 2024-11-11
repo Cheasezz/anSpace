@@ -1,0 +1,15 @@
+.negativeButton {
+  background-color: transparent;
+}
+
+.negativeButton:enabled:active {
+  background-color: var(--black-color);
+  filter: brightness(70%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .negativeButton:enabled:hover {
+    background-color: var(--black-color);
+    filter: brightness(70%);
+  }
+}

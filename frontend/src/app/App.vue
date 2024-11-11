@@ -3,9 +3,11 @@ import { AuthPage } from '@/pages/auth'
 </script>
 
 <template>
-  <AuthPage />
+  <Suspense>
+    <AuthPage />
+  </Suspense>
 </template>
 
 <style>
-@import "index.css";
+@import 'index.css';
 </style>

@@ -13,7 +13,7 @@ export function useValidateEmailAndPass() {
     errPass = ref(),
     errRepPass = ref()
 
-  // Accept event from submited form for authorization and validate named input
+  // Accept event from submited form for authorization. Validate named input
   // Relevant for signin form and signup form with named input "repeatPassword"
   function validate(e: Event): TUserAuth | false {
     const form = new FormData(e.target as HTMLFormElement),

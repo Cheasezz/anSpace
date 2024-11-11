@@ -1,0 +1,42 @@
+.serviceButton {
+  position: relative;
+
+  padding-inline: 0.5rem;
+  gap: 0.3rem;
+  font-family: 'Plus Jakarta Sans', serif;
+  color: var(--black-color);
+  background-color: var(--white-color);
+  svg {
+    height: 0.8rem;
+  }
+  @media (width <= 1024px) {
+    width: auto;
+  }
+}
+
+.serviceButton.connected {
+  outline: 2px solid var(--primary-color);
+}
+
+.serviceButton.connected::after {
+  content: '';
+  position: absolute;
+  top: -8%;
+  right: 0;
+  width: 0.15rem;
+  height: 0.33rem;
+  border: solid var(--white-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.serviceButton.connected::before {
+  content: '';
+  position: absolute;
+  top: -15%;
+  right: -0.24rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+}

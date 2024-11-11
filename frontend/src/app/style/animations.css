@@ -7,8 +7,8 @@
   height: 1px;
   background-color: var(--primary-color);
   transition:
-    opacity 120ms,
-    transform 120ms;
+    opacity .05s,
+    transform .1s;
   transform: translate3d(-101%, 0, 0);
 }
 

@@ -560,6 +560,7 @@ func TestAuth_me(t *testing.T) {
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
 				tm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
 				s.EXPECT().GetUser(gomock.Any(), testUUID).Return(core.User{}, errServiceGetUser).Times(1)
+				l.EXPECT().Error(errServiceGetUser)
 			},
 		},
 	}

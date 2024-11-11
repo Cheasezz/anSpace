@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ButtonHTMLAttributes, PropType } from 'vue'
+import { type ButtonHTMLAttributes, type PropType } from 'vue'
 import styles from './styles.module.css'
 
 defineProps({
@@ -15,6 +15,7 @@ defineProps({
     :class="[styles.button]"
     :type="buttonType"
   >
+    <slot name="icon"></slot>
     <slot></slot>
   </button>
 </template>

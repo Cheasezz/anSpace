@@ -1,15 +1,17 @@
 <script lang="ts" setup>
 import styles from './styles.module.css'
-import { BaseButton, BaseInput, InputPassVisibility } from '@/shared/ui'
+import { BaseButton, BaseInput, PassInput } from '@/shared/ui'
 import { useValidateEmailAndPass } from '../../model/validations'
 import { signin } from '@/shared/api'
 import { ref } from 'vue'
+import { useUserStore } from '@/entities/user'
+
+const userStore = useUserStore()
 
 defineEmits<{
   changeToSignup: [val: 'signup']
 }>()
 
-const passInputType = ref('password')
 const { validate, errEmail, errPass, resetErrVal } = useValidateEmailAndPass()
 
 async function signinWithValidation(e: Event) {
@@ -17,6 +19,7 @@ async function signinWithValidation(e: Event) {
   if (auth) {
     try {
       await signin(auth)
+      await userStore.whoAmI()
     } catch (err) {
       const error = err as Error
       errPass.value = error.message
@@ -51,9 +54,8 @@ async function signinWithValidation(e: Event) {
       :error-message="errEmail"
       @input="resetErrVal"
     />
-    <BaseInput
+    <PassInput
       label-text="Пароль"
-      :input-type="passInputType"
       :tab-index="3"
       auto-complete="current-password"
       input-name="password"
@@ -61,13 +63,7 @@ async function signinWithValidation(e: Event) {
       :error-message="errPass"
       @input="resetErrVal"
     >
-      <template #icon>
-        <InputPassVisibility
-          :input-type="passInputType"
-          @new-input-type="(val) => (passInputType = val)"
-        />
-      </template>
-    </BaseInput>
+    </PassInput>
     <BaseButton :class="[styles.button]"> Вход</BaseButton>
   </form>
 </template>

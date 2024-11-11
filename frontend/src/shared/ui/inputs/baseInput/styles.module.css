@@ -8,10 +8,10 @@
 
 .label:focus-within {
   color: var(--primary-color);
-  transition: color 150ms;
+  transition: color 0.1s;
   .input {
     border-bottom-color: var(--primary-color);
-    transition: border-bottom-color 150ms;
+    transition: border-bottom-color 0.1s;
   }
 }
 
@@ -23,6 +23,10 @@
   caret-color: var(--primary-color);
   background-color: inherit;
   border-bottom: 1px solid var(--white-color);
+}
+
+.input.err {
+  border-bottom-color: var(--red-color);
 }
 
 .inputError {

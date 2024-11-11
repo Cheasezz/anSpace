@@ -1,18 +1,15 @@
 <script lang="ts" setup>
 import styles from './styles.module.css'
-import { BaseButton, BaseInput, InputPassVisibility } from '@/shared/ui'
+import { BaseButton, BaseInput, PassInput } from '@/shared/ui'
 import { signup } from '@/shared/api'
 import { useValidateEmailAndPass } from '../../model/validations'
-import { ref } from 'vue'
+import { useUserStore } from '@/entities/user'
 
 defineEmits<{
   changeToSignin: [val: 'signin']
 }>()
 
-// const { passIsVisible, passInputType, repeatPassIsVisible, repeatPassInputType } =
-//   useInputPassVisibility()
-const passInputType = ref('password')
-const repeatPassInputType = ref('password')
+const userStore = useUserStore()
 
 const { validate, errEmail, errPass, errRepPass, resetErrVal } = useValidateEmailAndPass()
 
@@ -21,6 +18,7 @@ async function signupWithValidation(e: Event) {
   if (auth) {
     try {
       await signup(auth)
+      await userStore.whoAmI()
     } catch (err) {
       const error = err as Error
       errRepPass.value = error.message
@@ -55,40 +53,24 @@ async function signupWithValidation(e: Event) {
       :tab-index="2"
       @input="resetErrVal"
     />
-    <BaseInput
+    <PassInput
       label-text="Пароль"
-      :input-type="passInputType"
       :with-error="true"
       :error-message="errPass"
       auto-complete="new-password"
       input-name="password"
       :tab-index="3"
       @input="resetErrVal"
-    >
-      <template #icon>
-        <InputPassVisibility
-          :input-type="passInputType"
-          @new-input-type="(val) => (passInputType = val)"
-        />
-      </template>
-    </BaseInput>
-    <BaseInput
+    />
+    <PassInput
       label-text="Подтвердите пароль"
-      :input-type="repeatPassInputType"
       :with-error="true"
       :error-message="errRepPass"
       auto-complete="new-password"
       input-name="repeatPassword"
       :tab-index="4"
       @input="resetErrVal"
-    >
-      <template #icon>
-        <InputPassVisibility
-          :input-type="repeatPassInputType"
-          @new-input-type="(val) => (repeatPassInputType = val)"
-        />
-      </template>
-    </BaseInput>
+    />
     <BaseButton :class="[styles.button]">Регистрация</BaseButton>
   </form>
 </template>

@@ -1,3 +1,7 @@
+.form {
+  min-height: 14.8rem;
+}
+
 .span {
   position: relative;
   margin-left: 8px;

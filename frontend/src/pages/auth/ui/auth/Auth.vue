@@ -1,25 +1,39 @@
 <script lang="ts" setup>
 import styles from './styles.module.css'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import Signin from '../signin/Signin.vue'
 import Signup from '../signup/Signup.vue'
 import { MainWithSpaceBg } from '@/shared/ui'
+import AlmostThere from '../almostThere/AlmostThere.vue'
+import { useUserStore } from '@/entities/user'
 
-const inOrUp = ref<string>('signin')
+const userStore = useUserStore()
+const authProcess = ref<string>('signin')
+await userStore.whoAmI()
+
+watch(
+  () => userStore.user,
+  () => {
+    if (userStore.user) authProcess.value = 'almost'
+    else authProcess.value = 'signin'
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <MainWithSpaceBg>
     <div :class="[styles.container]">
       <Transition mode="out-in">
+        <AlmostThere v-if="authProcess == 'almost'" />
         <Signin
-          v-if="inOrUp == 'signin'"
-          @change-to-signup="(val) => (inOrUp = val)"
+          v-else-if="authProcess == 'signin'"
+          @change-to-signup="(val) => (authProcess = val)"
         />
 
         <Signup
-          v-else-if="inOrUp == 'signup'"
-          @change-to-signin="(val) => (inOrUp = val)"
+          v-else-if="authProcess == 'signup'"
+          @change-to-signin="(val) => (authProcess = val)"
         />
       </Transition>
     </div>
@@ -30,7 +44,7 @@ const inOrUp = ref<string>('signin')
 .v-move,
 .v-enter-active,
 .v-leave-active {
-  transition: all 0.3s linear;
+  transition: all 0.2s linear;
 }
 
 .v-enter-from {
