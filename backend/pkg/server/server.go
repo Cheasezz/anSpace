@@ -17,9 +17,15 @@ type Server struct {
 }
 
 func NewServer(cfg config.HTTP, handler http.Handler) *Server {
+	var address string
+	if cfg.Host == "localhost" {
+		address = cfg.Host + ":" + cfg.Port
+	} else {
+		address = cfg.Host
+	}
 	s := &Server{
 		HttpServer: &http.Server{
-			Addr:           cfg.Host + ":" + cfg.Port,
+			Addr:           address,
 			Handler:        handler,
 			MaxHeaderBytes: 1 << 20,
 			ReadTimeout:    10 * time.Second,
@@ -48,6 +54,6 @@ func (s *Server) Notify() <-chan error {
 func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 	defer cancel()
- 
+
 	return s.HttpServer.Shutdown(ctx)
 }

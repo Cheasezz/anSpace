@@ -21,6 +21,7 @@ async function signupWithValidation(e: Event) {
       await userStore.whoAmI()
     } catch (err) {
       const error = err as Error
+      console.log(err)
       errRepPass.value = error.message
     }
   }
