@@ -30,6 +30,7 @@ func newErrorResponse(c *gin.Context, l logger.Logger, statusCode int, err error
 }
 
 func newTokenResponse(c *gin.Context, t auth.Tokens, cfg config.HTTP) {
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(rtCookieName, t.Refresh.Token, t.Refresh.TTLInSec, "/", cfg.FrontendOrigins[0], false, true)
 	c.JSON(http.StatusOK, tokenResponse{
 		Access: t.Access,
