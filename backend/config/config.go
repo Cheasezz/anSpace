@@ -19,6 +19,7 @@ type HTTP struct {
 	Host string `env-required:"true" yaml:"host" env:"HOST"`
 	Port string `env-required:"true" yaml:"port" env:"PORT"`
 	FrontendOrigins []string `env-required:"true" yaml:"frontend_origin" env:"FRONTEND_ORIGIN"`
+	CookieHost string `env-required:"true" yaml:"cookie_host" env:"COOKIE_HOST"`
 }
 
 type PG struct {
