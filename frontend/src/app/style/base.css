@@ -20,9 +20,9 @@
 
 @font-face {
   font-family: 'Plus Jakarta Sans';
-  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/PlusJakartaSans-Bold.ttf) format('truetype');
-  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/PlusJakartaSans-Bold.woff) format('woff');
-  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/PlusJakartaSans-Bold.woff2) format('woff2');
+  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/plusjakartasansbold.ttf) format('truetype');
+  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/plusjakartasansbold.woff) format('woff');
+  src: url(../../shared/ui/assets/fonts/PlusJakartaSans/plusjakartasansbold.woff2) format('woff2');
   font-style: normal;
   font-weight: 700;
   font-display: swap;
