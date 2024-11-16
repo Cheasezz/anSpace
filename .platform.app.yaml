@@ -23,9 +23,7 @@ web:
 
     commands:
         # If you change the build output in the build hook above, update this line as well.
-        start: ./app
-    source:
-      root: backend
+        start: ./backend/app
 
     locations:
         /:
