@@ -10,9 +10,11 @@ name: app
 type: 'golang:1.23'
 
 hooks:
-    build: 
+    build: |
         # Modify this line if you want to build differently or use an alternate name for your executable.
         go build -tags netgo -ldflags '-s -w' -o app ./cmd   
+    source:
+      root: backend
 
 web:
     upstream:
@@ -21,7 +23,9 @@ web:
 
     commands:
         # If you change the build output in the build hook above, update this line as well.
-        start: app
+        start: ./app
+    source:
+      root: backend
 
     locations:
         /:
