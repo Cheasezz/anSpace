@@ -12,7 +12,7 @@ import (
 )
 
 type Auth interface {
-	SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error)
+	SignUp(ctx context.Context, signUp core.AuthCredentials) (auth.Tokens, error)
 	SignIn(ctx context.Context, signIn core.AuthCredentials) (auth.Tokens, error)
 	LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error)
 	RefreshAccessToken(ctx context.Context, refreshToken string) (auth.Tokens, error)
@@ -40,14 +40,18 @@ func newAuthService(r psql.Auth, h hasher.PasswordHasher, tm auth.TokenManager) 
 // Hash password and write new user into db.
 // With method repo.CreateUser.
 // Return userId and error.
-func (s *AuthService) SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
+func (s *AuthService) SignUp(ctx context.Context, signUp core.AuthCredentials) (auth.Tokens, error) {
 	pass, err := s.hasher.Hash(signUp.Password)
 	if err != nil {
-		return uuid.UUID{}, err
+		return auth.Tokens{}, err
 	}
 	signUp.Password = pass
 	userId, err := s.repo.CreateUser(ctx, signUp)
-	return userId, err
+	if err != nil {
+		return auth.Tokens{}, err
+	}
+
+	return s.createSession(ctx, userId)
 }
 
 // Hash password and search ind db userId with method repo.GetUser.

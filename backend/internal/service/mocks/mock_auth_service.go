@@ -103,10 +103,10 @@ func (mr *MockAuthMockRecorder) SignIn(ctx, signIn any) *gomock.Call {
 }
 
 // SignUp mocks base method.
-func (m *MockAuth) SignUp(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error) {
+func (m *MockAuth) SignUp(ctx context.Context, signUp core.AuthCredentials) (auth.Tokens, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SignUp", ctx, signUp)
-	ret0, _ := ret[0].(uuid.UUID)
+	ret0, _ := ret[0].(auth.Tokens)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

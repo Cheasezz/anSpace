@@ -26,73 +26,6 @@ var (
 	errRefreshTokenIsExpired            = fmt.Errorf("tm refresh token is expired")
 )
 
-func TestAuth_SignUp(t *testing.T) {
-	type mockBehavior func(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, input core.AuthCredentials)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	repo := mock_psql.NewMockAuth(ctrl)
-	hash := mock_hash.NewMockPasswordHasher(ctrl)
-	tm := mock_auth.NewMockTokenManager(ctrl)
-
-	authSrv := newAuthService(repo, hash, tm)
-	testUUID := uuid.New()
-	tests := []struct {
-		name         string
-		inputUser    core.AuthCredentials
-		userId       uuid.UUID
-		expErr       error
-		mockBehavior mockBehavior
-	}{
-		{
-			name:      "OK",
-			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			userId:    testUUID,
-			mockBehavior: func(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, input core.AuthCredentials) {
-				h.EXPECT().Hash(input.Password).Return(input.Password, nil)
-				r.EXPECT().CreateUser(gomock.Any(), input).Return(testUUID, nil)
-			},
-		},
-		{
-			name:      "Hasher error",
-			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			userId:    uuid.UUID{},
-			expErr:    errHasher,
-			mockBehavior: func(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, input core.AuthCredentials) {
-				h.EXPECT().Hash(input.Password).Return("", errHasher)
-			},
-		},
-		{
-			name:      "Repo error",
-			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			userId:    uuid.UUID{},
-			expErr:    errRepo,
-			mockBehavior: func(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, input core.AuthCredentials) {
-				h.EXPECT().Hash(input.Password).Return(input.Password, nil)
-				r.EXPECT().CreateUser(gomock.Any(), input).Return(uuid.UUID{}, errRepo)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(hash, repo, tt.inputUser)
-
-			id, err := authSrv.SignUp(context.Background(), tt.inputUser)
-			if err != nil {
-				require.Empty(t, id)
-				require.Error(t, err)
-				require.EqualError(t, tt.expErr, err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-			require.Equal(t, tt.userId, id)
-
-		})
-	}
-}
-
 func initTokens() auth.Tokens {
 	tokenStr := "token"
 
@@ -117,6 +50,77 @@ type deps struct {
 func initDeps(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, tm *mock_auth.MockTokenManager) deps {
 	return deps{h, r, tm}
 }
+
+func TestAuth_SignUp(t *testing.T) {
+	type mockBehavior func(d deps, input core.AuthCredentials, session core.Session)
+	tokens := initTokens()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repo := mock_psql.NewMockAuth(ctrl)
+	hash := mock_hash.NewMockPasswordHasher(ctrl)
+	tm := mock_auth.NewMockTokenManager(ctrl)
+	d := initDeps(hash, repo, tm)
+
+	authSrv := newAuthService(repo, hash, tm)
+	testUUID := uuid.New()
+	tests := []struct {
+		name         string
+		inputUser    core.AuthCredentials
+		session      core.Session
+		expErr       error
+		mockBehavior mockBehavior
+	}{
+		{
+			name:      "OK",
+			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token, ExpiresAt: tokens.Refresh.ExpiresAt},
+			mockBehavior: func(d deps, input core.AuthCredentials, session core.Session) {
+				d.h.EXPECT().Hash(input.Password).Return(input.Password, nil)
+				d.r.EXPECT().CreateUser(gomock.Any(), input).Return(testUUID, nil)
+				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access, nil)
+				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
+				d.r.EXPECT().SetSession(gomock.Any(), session).Return(nil)
+			},
+		},
+		{
+			name:      "Hasher error",
+			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			expErr:    errHasher,
+			mockBehavior: func(d deps, input core.AuthCredentials, session core.Session) {
+				d.h.EXPECT().Hash(input.Password).Return("", errHasher)
+			},
+		},
+		{
+			name:      "Repo error",
+			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
+			expErr:    errRepo,
+			mockBehavior: func(d deps, input core.AuthCredentials, session core.Session) {
+				d.h.EXPECT().Hash(input.Password).Return(input.Password, nil)
+				d.r.EXPECT().CreateUser(gomock.Any(), input).Return(uuid.UUID{}, errRepo)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.mockBehavior(d, tt.inputUser, tt.session)
+
+			tkns, err := authSrv.SignUp(context.Background(), tt.inputUser)
+			if err != nil {
+				require.Empty(t, tkns)
+				require.Error(t, err)
+				require.EqualError(t, tt.expErr, err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tokens, tkns)
+			}
+
+		})
+	}
+}
+
 func TestAuth_SignIn(t *testing.T) {
 	type mockBehavior func(d deps, i core.AuthCredentials, s core.Session)
 	tokens := initTokens()

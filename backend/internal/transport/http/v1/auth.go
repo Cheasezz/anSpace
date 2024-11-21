@@ -72,13 +72,7 @@ func (h *Auth) signUp(c *gin.Context) {
 		return
 	}
 
-	_, err := h.service.SignUp(c, input)
-	if err != nil {
-		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
-		return
-	}
-
-	tokens, err := h.service.SignIn(c, input)
+	tokens, err := h.service.SignUp(c, input)
 	if err != nil {
 		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
 		return

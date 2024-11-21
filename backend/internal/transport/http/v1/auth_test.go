@@ -144,7 +144,6 @@ func TestAuthHandler_signUp(t *testing.T) {
 	r := gin.New()
 	v1 := r.Group("/v1")
 	handler.initAuthRoutes(v1)
-	testUUID := uuid.New()
 	tests := []struct {
 		name            string
 		mockBehavior    mockBehavior
@@ -158,8 +157,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 			inputBody:       `{"email": "Cheasezz@gmail.com","password":"qwerty123456"}`,
 			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
-				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(testUUID, nil)
-				s.EXPECT().SignIn(gomock.Any(), AuthCredentials).Return(tokens, nil)
+				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(tokens, nil)
 			},
 			expStatCode: 200,
 			expReqBody:  fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
@@ -219,23 +217,11 @@ func TestAuthHandler_signUp(t *testing.T) {
 			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
 			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
-				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(uuid.UUID{}, errServiceSignUp)
+				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(auth.Tokens{}, errServiceSignUp)
 				l.EXPECT().Error(errServiceSignUp)
 			},
 			expStatCode: 500,
 			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceSignUp),
-		},
-		{
-			name:            "Server error: Service Sign In error",
-			inputBody:       `{"email":"Cheasezz@gmail.com","password":"qwerty123456"}`,
-			AuthCredentials: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, AuthCredentials core.AuthCredentials) {
-				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(testUUID, nil)
-				s.EXPECT().SignIn(gomock.Any(), AuthCredentials).Return(auth.Tokens{}, errServiceSignIn)
-				l.EXPECT().Error(errServiceSignIn)
-			},
-			expStatCode: 500,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceSignIn),
 		},
 	}
 	for _, tt := range tests {
