@@ -15,13 +15,14 @@ const emit = defineEmits<{
 const { validate, errEmail, errPass, resetErrVal } = useValidateEmailAndPass()
 
 async function signinWithValidation(e: Event) {
-  const tId = setTimeout(() => emit('asyncReqInProccess', true), 2000)
+  const tId = setTimeout(() => emit('asyncReqInProccess', true), 50)
   const auth = validate(e)
   if (auth) {
     try {
       await signin(auth)
       await userStore.whoAmI()
     } catch (err) {
+      clearTimeout(tId)
       const error = err as Error
       errPass.value = error.message
     }

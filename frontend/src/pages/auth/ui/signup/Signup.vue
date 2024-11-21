@@ -15,13 +15,14 @@ const userStore = useUserStore()
 const { validate, errEmail, errPass, errRepPass, resetErrVal } = useValidateEmailAndPass()
 
 async function signupWithValidation(e: Event) {
-  const tId = setTimeout(() => emit('asyncReqInProccess', true), 2000)
+  const tId = setTimeout(() => emit('asyncReqInProccess', true), 50)
   const auth = validate(e)
   if (auth) {
     try {
       await signup(auth)
       await userStore.whoAmI()
     } catch (err) {
+      clearTimeout(tId)
       const error = err as Error
       console.log(err)
       errRepPass.value = error.message
