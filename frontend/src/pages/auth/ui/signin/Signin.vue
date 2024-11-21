@@ -3,18 +3,19 @@ import styles from './styles.module.css'
 import { BaseButton, BaseInput, PassInput } from '@/shared/ui'
 import { useValidateEmailAndPass } from '../../model/validations'
 import { signin } from '@/shared/api'
-import { ref } from 'vue'
 import { useUserStore } from '@/entities/user'
 
 const userStore = useUserStore()
 
-defineEmits<{
+const emit = defineEmits<{
   changeToSignup: [val: 'signup']
+  asyncReqInProccess: [val: boolean]
 }>()
 
 const { validate, errEmail, errPass, resetErrVal } = useValidateEmailAndPass()
 
 async function signinWithValidation(e: Event) {
+  const tId = setTimeout(() => emit('asyncReqInProccess', true), 2000)
   const auth = validate(e)
   if (auth) {
     try {
@@ -24,6 +25,8 @@ async function signinWithValidation(e: Event) {
       const error = err as Error
       errPass.value = error.message
     }
+  } else {
+    clearTimeout(tId)
   }
 }
 </script>

@@ -7,6 +7,7 @@ import { MainWithSpaceBg } from '@/shared/ui'
 import AlmostThere from '../almostThere/AlmostThere.vue'
 import { useUserStore } from '@/entities/user'
 
+const isLoading = ref<boolean>(false)
 const userStore = useUserStore()
 const authProcess = ref<string>('signin')
 await userStore.whoAmI()
@@ -16,6 +17,7 @@ watch(
   () => {
     if (userStore.user) authProcess.value = 'almost'
     else authProcess.value = 'signin'
+    isLoading.value = false
   },
   { immediate: true },
 )
@@ -23,12 +25,13 @@ watch(
 
 <template>
   <MainWithSpaceBg>
-    <div :class="[styles.container]">
+    <div :class="[styles.container, { [styles.active]: isLoading }]">
       <Transition mode="out-in">
         <AlmostThere v-if="authProcess == 'almost'" />
         <Signin
           v-else-if="authProcess == 'signin'"
           @change-to-signup="(val) => (authProcess = val)"
+          @async-req-in-proccess="(val) => (val ? (isLoading = true) : false)"
         />
 
         <Signup

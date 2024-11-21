@@ -5,8 +5,9 @@ import { signup } from '@/shared/api'
 import { useValidateEmailAndPass } from '../../model/validations'
 import { useUserStore } from '@/entities/user'
 
-defineEmits<{
+const emit = defineEmits<{
   changeToSignin: [val: 'signin']
+  asyncReqInProccess: [val: boolean]
 }>()
 
 const userStore = useUserStore()
@@ -14,6 +15,7 @@ const userStore = useUserStore()
 const { validate, errEmail, errPass, errRepPass, resetErrVal } = useValidateEmailAndPass()
 
 async function signupWithValidation(e: Event) {
+  const tId = setTimeout(() => emit('asyncReqInProccess', true), 2000)
   const auth = validate(e)
   if (auth) {
     try {
@@ -24,6 +26,8 @@ async function signupWithValidation(e: Event) {
       console.log(err)
       errRepPass.value = error.message
     }
+  } else {
+    clearTimeout(tId)
   }
 }
 </script>

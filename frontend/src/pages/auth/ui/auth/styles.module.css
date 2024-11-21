@@ -7,6 +7,7 @@
   left: -15%;
   background-color: var(--black-color);
   border-radius: 20px;
+  border: 2px solid transparent;
 
   @media only screen and (max-width: 1368px) {
     top: 0;
@@ -16,4 +17,33 @@
   @media only screen and (max-width: 512px) {
     width: 15rem;
   }
+}
+
+.container.active {
+  --border-angle: 0turn;
+  --main-bg: conic-gradient(var(--black-color), var(--black-color));
+  --gradient-border: conic-gradient(
+    from var(--border-angle),
+    transparent 55%,
+    var(--primary-color),
+    transparent
+  );
+
+  background:
+    var(--main-bg) padding-box,
+    var(--gradient-border) border-box,
+    var(--main-bg) border-box;
+  animation: bg-spin 0.8s linear infinite;
+}
+
+@keyframes bg-spin {
+  to {
+    --border-angle: 1turn;
+  }
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0turn;
 }
