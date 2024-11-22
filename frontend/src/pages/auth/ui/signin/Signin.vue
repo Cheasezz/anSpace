@@ -4,6 +4,7 @@ import { BaseButton, BaseInput, PassInput } from '@/shared/ui'
 import { useValidateEmailAndPass } from '../../model/validations'
 import { signin } from '@/shared/api'
 import { useUserStore } from '@/entities/user'
+import { nextTick } from 'vue'
 
 const userStore = useUserStore()
 
@@ -22,7 +23,7 @@ async function signinWithValidation(e: Event) {
       await signin(auth)
       await userStore.whoAmI()
     } catch (err) {
-      clearTimeout(tId)
+      emit('asyncReqInProccess', false)
       const error = err as Error
       errPass.value = error.message
     }

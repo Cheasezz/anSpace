@@ -21,6 +21,10 @@ watch(
   },
   { immediate: true },
 )
+
+function changeLoadVal(v: boolean) {
+  v ? (isLoading.value = true) : (isLoading.value = false)
+}
 </script>
 
 <template>
@@ -31,12 +35,13 @@ watch(
         <Signin
           v-else-if="authProcess == 'signin'"
           @change-to-signup="(val) => (authProcess = val)"
-          @async-req-in-proccess="(val) => (val ? (isLoading = true) : false)"
+          @async-req-in-proccess="changeLoadVal"
         />
 
         <Signup
           v-else-if="authProcess == 'signup'"
           @change-to-signin="(val) => (authProcess = val)"
+          @async-req-in-proccess="changeLoadVal"
         />
       </Transition>
     </div>
