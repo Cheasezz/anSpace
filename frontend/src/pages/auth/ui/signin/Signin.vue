@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import styles from './styles.module.css'
-import { BaseButton, BaseInput, PassInput } from '@/shared/ui'
+import { BaseButton, BaseInput, NegativeButton, PassInput } from '@/shared/ui'
 import { useValidateEmailAndPass } from '../../model/validations'
 import { signin } from '@/shared/api'
 import { useUserStore } from '@/entities/user'
-import { nextTick } from 'vue'
 
 const userStore = useUserStore()
 
 const emit = defineEmits<{
   changeToSignup: [val: 'signup']
+  changeToResetPass: [val: 'resetPass']
   asyncReqInProccess: [val: boolean]
 }>()
 
@@ -69,6 +69,14 @@ async function signinWithValidation(e: Event) {
       @input="resetErrVal"
     >
     </PassInput>
-    <BaseButton :class="[styles.button]"> Вход</BaseButton>
+    <div :class="[styles.buttons]">
+      <NegativeButton
+        button-type="button"
+        @click="$emit('changeToResetPass', 'resetPass')"
+      >
+        Забыли пароль?
+      </NegativeButton>
+      <BaseButton :class="[styles.button]"> Вход</BaseButton>
+    </div>
   </form>
 </template>

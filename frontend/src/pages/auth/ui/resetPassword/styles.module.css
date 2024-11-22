@@ -1,7 +1,3 @@
-.form {
-  min-height: 14.8rem;
-}
-
 .span {
   position: relative;
   margin-left: 8px;
@@ -12,12 +8,13 @@
 
 .flexRow {
   display: flex;
-  margin-bottom: auto;
+  margin-block: .5rem .7rem;
 }
 
-.buttons {
+.buttons{
   display: flex;
   justify-content: space-between;
-  margin-top: auto;
+  margin-top: 1rem;
 }
+
 

@@ -1,4 +1,5 @@
 .negativeButton {
+  color: var(--primary-color);
   background-color: transparent;
 }
 

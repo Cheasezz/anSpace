@@ -12,7 +12,10 @@ defineProps({
 </script>
 
 <template>
-  <BaseButton :class="[styles.negativeButton]">
+  <BaseButton
+    :class="[styles.negativeButton]"
+    :button-type="buttonType"
+  >
     <template #icon>
       <slot name="icon"></slot>
     </template>

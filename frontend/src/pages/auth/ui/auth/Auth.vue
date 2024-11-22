@@ -6,6 +6,7 @@ import Signup from '../signup/Signup.vue'
 import { MainWithSpaceBg } from '@/shared/ui'
 import AlmostThere from '../almostThere/AlmostThere.vue'
 import { useUserStore } from '@/entities/user'
+import ResetPassword from '../resetPassword/ResetPassword.vue'
 
 const isLoading = ref<boolean>(false)
 const userStore = useUserStore()
@@ -32,9 +33,15 @@ function changeLoadVal(v: boolean) {
     <div :class="[styles.container, { [styles.active]: isLoading }]">
       <Transition mode="out-in">
         <AlmostThere v-if="authProcess == 'almost'" />
+        <ResetPassword
+          v-else-if="authProcess == 'resetPass'"
+          @change-to-signin="(val) => (authProcess = val)"
+          @change-to-signup="(val) => (authProcess = val)"
+        />
         <Signin
           v-else-if="authProcess == 'signin'"
           @change-to-signup="(val) => (authProcess = val)"
+          @change-to-reset-pass="(val) => (authProcess = val)"
           @async-req-in-proccess="changeLoadVal"
         />
 
