@@ -7,6 +7,7 @@ import (
 	"github.com/Cheasezz/anSpace/backend/internal/core"
 	"github.com/Cheasezz/anSpace/backend/internal/repository/psql"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
+	"github.com/Cheasezz/anSpace/backend/pkg/email"
 	"github.com/Cheasezz/anSpace/backend/pkg/hasher"
 	"github.com/google/uuid"
 )
@@ -27,6 +28,7 @@ type AuthService struct {
 	repo         psql.Auth
 	hasher       hasher.PasswordHasher
 	tokenManager auth.TokenManager
+	emailSender  email.Sender
 }
 
 func newAuthService(r psql.Auth, h hasher.PasswordHasher, tm auth.TokenManager) *AuthService {

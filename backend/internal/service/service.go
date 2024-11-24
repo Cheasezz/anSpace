@@ -3,6 +3,7 @@ package service
 import (
 	repositories "github.com/Cheasezz/anSpace/backend/internal/repository"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
+	"github.com/Cheasezz/anSpace/backend/pkg/email"
 	"github.com/Cheasezz/anSpace/backend/pkg/hasher"
 )
 
@@ -14,6 +15,7 @@ type Deps struct {
 	Repos        *repositories.Repositories
 	Hasher       hasher.PasswordHasher
 	TokenManager auth.TokenManager
+	EmailSender  email.Sender
 }
 
 func NewServices(d Deps) *Services {

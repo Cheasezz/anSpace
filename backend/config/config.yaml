@@ -19,3 +19,8 @@ token_manager:
 
 logger:
   log_level: "debug"
+
+email_sender:
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  from: "anspace.world@gmail.com"

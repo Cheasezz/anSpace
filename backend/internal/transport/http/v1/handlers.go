@@ -12,6 +12,7 @@ type Handlers struct {
 	*Auth
 }
 
+// TODO: token manager in no needed, remove from stuct. Clean tests
 type Deps struct {
 	Services     *service.Services
 	TokenManager auth.TokenManager
@@ -32,4 +33,3 @@ func (h *Handlers) InitRoutes(router *gin.RouterGroup) {
 		h.initAuthRoutes(v1)
 	}
 }
-

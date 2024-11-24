@@ -11,6 +11,7 @@ import (
 	httpHandlers "github.com/Cheasezz/anSpace/backend/internal/transport/http"
 	v1 "github.com/Cheasezz/anSpace/backend/internal/transport/http/v1"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
+	"github.com/Cheasezz/anSpace/backend/pkg/email"
 	"github.com/Cheasezz/anSpace/backend/pkg/hasher"
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	"github.com/Cheasezz/anSpace/backend/pkg/postgres"
@@ -19,6 +20,10 @@ import (
 
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
+	es, err := email.NewSender(cfg.EmailSender)
+	if err != nil {
+		l.Fatal("failed initialize emailSender: %s", err.Error())
+	}
 
 	psql, err := postgres.NewPostgressDB(cfg.PG)
 	if err != nil {
@@ -40,6 +45,7 @@ func Run(cfg *config.Config) {
 		Repos:        repos,
 		Hasher:       hasher,
 		TokenManager: tokenManager,
+		EmailSender:  es,
 	})
 
 	handlers := httpHandlers.NewHandlers(v1.Deps{

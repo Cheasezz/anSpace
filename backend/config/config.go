@@ -13,13 +13,14 @@ type Config struct {
 	Hasher       `yaml:"hasher"`
 	TokenManager `yaml:"token_manager"`
 	Log          `yaml:"logger"`
+	EmailSender  `yaml:"email_sender"`
 }
 
 type HTTP struct {
-	Host string `env-required:"true" yaml:"host" env:"HOST"`
-	Port string `env-required:"true" yaml:"port" env:"PORT"`
+	Host            string   `env-required:"true" yaml:"host" env:"HOST"`
+	Port            string   `env-required:"true" yaml:"port" env:"PORT"`
 	FrontendOrigins []string `env-required:"true" yaml:"frontend_origin" env:"FRONTEND_ORIGIN"`
-	CookieHost string `env-required:"true" yaml:"cookie_host" env:"COOKIE_HOST"`
+	CookieHost      string   `env-required:"true" yaml:"cookie_host" env:"COOKIE_HOST"`
 }
 
 type PG struct {
@@ -40,6 +41,13 @@ type TokenManager struct {
 
 type Log struct {
 	Level string `env-required:"true" yaml:"log_level" env:"LOG_LEVEL"`
+}
+
+type EmailSender struct {
+	SmtpHost string `env-required:"true" yaml:"smtp_host" env:"SMTP_HOST"`
+	SmtpPort int `env-required:"true" yaml:"smtp_port" env:"SMTP_PORT"`
+	From     string `env-required:"true" yaml:"from" env:"FROM"`
+	Pass     string `env-required:"true" yaml:"pass" env:"pass"`
 }
 
 func NewConfig() (*Config, error) {
