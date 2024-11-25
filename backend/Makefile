@@ -28,3 +28,4 @@ gen:
 	mockgen -source=pkg/auth/manager.go -destination=pkg/auth/mocks/mock_auth_manager.go
 	mockgen -source=pkg/logger/logger.go -destination=pkg/logger/mocks/mock_logger.go
 	mockgen -source=pkg/hasher/hasher.go -destination=pkg/hasher/mocks/mock_hasher.go
+	mockgen -source=pkg/email/email.go -destination=pkg/email/mocks/mock_email.go

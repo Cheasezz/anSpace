@@ -10,6 +10,7 @@ import (
 	mock_psql "github.com/Cheasezz/anSpace/backend/internal/repository/psql/mocks"
 	"github.com/Cheasezz/anSpace/backend/pkg/auth"
 	mock_auth "github.com/Cheasezz/anSpace/backend/pkg/auth/mocks"
+	mock_email "github.com/Cheasezz/anSpace/backend/pkg/email/mocks"
 	mock_hash "github.com/Cheasezz/anSpace/backend/pkg/hasher/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -45,10 +46,11 @@ type deps struct {
 	h  *mock_hash.MockPasswordHasher
 	r  *mock_psql.MockAuth
 	tm *mock_auth.MockTokenManager
+	es *mock_email.MockSender
 }
 
-func initDeps(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, tm *mock_auth.MockTokenManager) deps {
-	return deps{h, r, tm}
+func initDeps(h *mock_hash.MockPasswordHasher, r *mock_psql.MockAuth, tm *mock_auth.MockTokenManager, es *mock_email.MockSender) deps {
+	return deps{h, r, tm, es}
 }
 
 func TestAuth_SignUp(t *testing.T) {
@@ -61,7 +63,8 @@ func TestAuth_SignUp(t *testing.T) {
 	repo := mock_psql.NewMockAuth(ctrl)
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	d := initDeps(hash, repo, tm)
+	es:= mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm,es)
 
 	authSrv := newAuthService(repo, hash, tm)
 	testUUID := uuid.New()
@@ -131,7 +134,8 @@ func TestAuth_SignIn(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	d := initDeps(hash, repo, tm)
+	es:= mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm,es)
 
 	authSrv := newAuthService(repo, hash, tm)
 	testUUID := uuid.New()
@@ -234,7 +238,8 @@ func TestAuth_LogOut(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	d := initDeps(hash, repo, tm)
+	es:= mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm,es)
 
 	authSrv := newAuthService(repo, hash, tm)
 
@@ -294,7 +299,8 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	d := initDeps(hash, repo, tm)
+	es:= mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm,es)
 
 	authSrv := newAuthService(repo, hash, tm)
 
@@ -387,7 +393,8 @@ func TestAuthService_GetUser(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	d := initDeps(hash, repo, tm)
+	es:= mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm,es)
 
 	authSrv := newAuthService(repo, hash, tm)
 	testUUID, _ := uuid.NewRandom()
