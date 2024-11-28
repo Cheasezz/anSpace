@@ -13,6 +13,9 @@ type Auth interface {
 	CreateUser(ctx context.Context, signUp core.AuthCredentials) (uuid.UUID, error)
 	GetUserIdByLogPas(ctx context.Context, signIn core.AuthCredentials) (uuid.UUID, error)
 	GetUserById(ctx context.Context, userId uuid.UUID) (core.User, error)
+	GetUserByEmail(ctx context.Context, email string) (core.User, error)
+	SetPassResetCode(ctx context.Context, code core.CodeCredentials) error
+	DeletePassResetCode(ctx context.Context, code core.CodeCredentials) error
 	SetSession(ctx context.Context, session core.Session) error
 	GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
 }
@@ -68,6 +71,28 @@ func (r *AuthRepo) GetUserById(ctx context.Context, userId uuid.UUID) (core.User
 	err := r.db.Scany.Get(ctx, r.db.Pool, &user, query, userId)
 
 	return user, err
+}
+
+func (r *AuthRepo) GetUserByEmail(ctx context.Context, email string) (core.User, error) {
+	var user core.User
+	query := fmt.Sprintf("SELECT * FROM %s WHERE email=$1", userTable)
+	err := r.db.Scany.Get(ctx, r.db.Pool, &user, query, email)
+
+	return user, err
+}
+
+func (r *AuthRepo) SetPassResetCode(ctx context.Context, code core.CodeCredentials) error {
+	query := fmt.Sprintf("INSERT INTO %s (user_email, code, code_type, expires_at) values ($1, $2, $3, $4)", codesTable)
+	_, err := r.db.Pool.Exec(ctx, query, code.Email, code.Code, code.CodeType, code.ExpiresAt)
+
+	return err
+}
+
+func (r *AuthRepo) DeletePassResetCode(ctx context.Context, code core.CodeCredentials) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE code=$1 AND user_email=$2", codesTable)
+	_, err := r.db.Pool.Exec(ctx, query, code.Code, code.Email)
+
+	return err
 }
 
 func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {

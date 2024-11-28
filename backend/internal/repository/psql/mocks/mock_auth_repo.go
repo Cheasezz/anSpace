@@ -56,6 +56,35 @@ func (mr *MockAuthMockRecorder) CreateUser(ctx, signUp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAuth)(nil).CreateUser), ctx, signUp)
 }
 
+// DeletePassResetCode mocks base method.
+func (m *MockAuth) DeletePassResetCode(ctx context.Context, code core.CodeCredentials) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePassResetCode", ctx, code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePassResetCode indicates an expected call of DeletePassResetCode.
+func (mr *MockAuthMockRecorder) DeletePassResetCode(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePassResetCode", reflect.TypeOf((*MockAuth)(nil).DeletePassResetCode), ctx, code)
+}
+
+// GetUserByEmail mocks base method.
+func (m *MockAuth) GetUserByEmail(ctx context.Context, email string) (core.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByEmail", ctx, email)
+	ret0, _ := ret[0].(core.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByEmail indicates an expected call of GetUserByEmail.
+func (mr *MockAuthMockRecorder) GetUserByEmail(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*MockAuth)(nil).GetUserByEmail), ctx, email)
+}
+
 // GetUserById mocks base method.
 func (m *MockAuth) GetUserById(ctx context.Context, userId uuid.UUID) (core.User, error) {
 	m.ctrl.T.Helper()
@@ -99,6 +128,20 @@ func (m *MockAuth) GetUserSessionByRefreshToken(ctx context.Context, refreshToke
 func (mr *MockAuthMockRecorder) GetUserSessionByRefreshToken(ctx, refreshToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSessionByRefreshToken", reflect.TypeOf((*MockAuth)(nil).GetUserSessionByRefreshToken), ctx, refreshToken)
+}
+
+// SetPassResetCode mocks base method.
+func (m *MockAuth) SetPassResetCode(ctx context.Context, code core.CodeCredentials) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPassResetCode", ctx, code)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPassResetCode indicates an expected call of SetPassResetCode.
+func (mr *MockAuthMockRecorder) SetPassResetCode(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPassResetCode", reflect.TypeOf((*MockAuth)(nil).SetPassResetCode), ctx, code)
 }
 
 // SetSession mocks base method.

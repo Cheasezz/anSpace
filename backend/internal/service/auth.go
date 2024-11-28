@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/Cheasezz/anSpace/backend/internal/core"
@@ -18,6 +20,7 @@ type Auth interface {
 	LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error)
 	RefreshAccessToken(ctx context.Context, refreshToken string) (auth.Tokens, error)
 	GetUser(ctx context.Context, userId uuid.UUID) (core.User, error)
+	GenPassResetCode(ctx context.Context, email string) error
 }
 
 var (
@@ -31,11 +34,12 @@ type AuthService struct {
 	emailSender  email.Sender
 }
 
-func newAuthService(r psql.Auth, h hasher.PasswordHasher, tm auth.TokenManager) *AuthService {
+func newAuthService(r psql.Auth, h hasher.PasswordHasher, tm auth.TokenManager, es email.Sender) *AuthService {
 	return &AuthService{
 		repo:         r,
 		hasher:       h,
 		tokenManager: tm,
+		emailSender:  es,
 	}
 }
 
@@ -161,4 +165,33 @@ func (s *AuthService) GetUser(c context.Context, userId uuid.UUID) (core.User, e
 		return core.User{}, err
 	}
 	return user, nil
+}
+
+// Genereate password reset code. Set them in db and send on email in param
+func (s *AuthService) GenPassResetCode(c context.Context, email string) error {
+	user, err := s.repo.GetUserByEmail(c, email)
+	if err != nil {
+		return err
+	}
+
+	passResetCode := make([]byte, 32)
+	src := rand.NewSource(time.Now().UTC().Unix() + rand.Int63())
+	r := rand.New(src)
+	r.Read(passResetCode)
+
+	code := core.CodeCredentials{
+		Email:     email,
+		Code:      fmt.Sprintf("%x", passResetCode),
+		CodeType:  "passReset",
+		ExpiresAt: time.Now().Add(time.Minute * 30),
+	}
+
+	if err := s.repo.SetPassResetCode(c, code); err != nil {
+		return err
+	}
+	message := fmt.Sprintf("This is your password reset code:%x", passResetCode)
+	if err := s.emailSender.Send(user.Email, message); err != nil {
+		return err
+	}
+	return nil
 }

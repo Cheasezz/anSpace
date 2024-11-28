@@ -33,6 +33,7 @@ func (h *Auth) initAuthRoutes(router *gin.RouterGroup) {
 		auth.POST("/signup", h.signUp)
 		auth.POST("/signin", h.signIn)
 		auth.GET("/logout", h.logOut)
+		auth.POST("/genpassresetcode", h.genPassResetCode)
 		auth.POST("/refresh", h.refreshAccessToken)
 		auth.GET("/me", h.userIdentity, h.me)
 	}
@@ -200,6 +201,37 @@ func (h *Auth) me(c *gin.Context) {
 	})
 }
 
+// @Tags auth
+// @Summary generate password reset code
+// @Description generate and save password reset code into db. Sends code to email
+// @ID gen_pass_reset_code
+// @Produce  json
+// @Success 200 
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /api/v1/reset [post]
+func (h *Auth) genPassResetCode(c *gin.Context) {
+
+	type Email struct {
+		Email string `json:"email"`
+	}
+	var email Email
+
+	if err := c.ShouldBindJSON(&email); err != nil {
+		newErrorResponse(c, h.log, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := h.service.GenPassResetCode(c, email.Email); err != nil {
+		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.AbortWithStatus(http.StatusOK)
+}
+
+// TODO: Separate validation for email and pass
 func (h *Auth) validateEmailAndPass(e string, p string) error {
 	var (
 		trimE = strings.TrimSpace(e)

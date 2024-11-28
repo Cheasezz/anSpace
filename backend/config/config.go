@@ -44,10 +44,11 @@ type Log struct {
 }
 
 type EmailSender struct {
-	SmtpHost string `env-required:"true" yaml:"smtp_host" env:"SMTP_HOST"`
-	SmtpPort int `env-required:"true" yaml:"smtp_port" env:"SMTP_PORT"`
-	From     string `env-required:"true" yaml:"from" env:"FROM"`
-	Pass     string `env-required:"true" yaml:"pass" env:"pass"`
+	SmtpHost      string `env-required:"true" yaml:"smtp_host" env:"SMTP_HOST"`
+	SmtpPort      int    `env-required:"true" yaml:"smtp_port" env:"SMTP_PORT"`
+	From          string `env-required:"true" yaml:"from" env:"FROM"`
+	Pass          string `env-required:"true" yaml:"pass" env:"PASS"`
+	AltSenderName string `env-required:"true" yaml:"alt_sender_name" env:"ALT_SENDER_NAME"`
 }
 
 func NewConfig() (*Config, error) {

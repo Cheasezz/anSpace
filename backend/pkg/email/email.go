@@ -13,21 +13,23 @@ type Sender interface {
 }
 
 type EmailSender struct {
-	dialer *gomail.Dialer
+	dialer        *gomail.Dialer
+	altSenderName string
 }
 
 func NewSender(cfg config.EmailSender) (*EmailSender, error) {
 	d := gomail.NewDialer(cfg.SmtpHost, cfg.SmtpPort, cfg.From, cfg.Pass)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	return &EmailSender{
-		dialer: d,
+		dialer:        d,
+		altSenderName: cfg.AltSenderName,
 	}, nil
 }
 
 func (s *EmailSender) Send(to, message string) error {
 	m := gomail.NewMessage()
 
-	m.SetHeader("From", s.dialer.Username)
+	m.SetHeader("From", m.FormatAddress(s.dialer.Username, s.altSenderName))
 
 	m.SetHeader("To", to)
 

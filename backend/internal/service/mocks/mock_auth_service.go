@@ -42,6 +42,20 @@ func (m *MockAuth) EXPECT() *MockAuthMockRecorder {
 	return m.recorder
 }
 
+// GenPassResetCode mocks base method.
+func (m *MockAuth) GenPassResetCode(ctx context.Context, email string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenPassResetCode", ctx, email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GenPassResetCode indicates an expected call of GenPassResetCode.
+func (mr *MockAuthMockRecorder) GenPassResetCode(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenPassResetCode", reflect.TypeOf((*MockAuth)(nil).GenPassResetCode), ctx, email)
+}
+
 // GetUser mocks base method.
 func (m *MockAuth) GetUser(ctx context.Context, userId uuid.UUID) (core.User, error) {
 	m.ctrl.T.Helper()

@@ -23,4 +23,5 @@ logger:
 email_sender:
   smtp_host: "smtp.gmail.com"
   smtp_port: 587
-  from: "anspace.world@gmail.com"
+  from: "yuradolgo@gmail.com"
+  alt_sender_name: "AnSpace"

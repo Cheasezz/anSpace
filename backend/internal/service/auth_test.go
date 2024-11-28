@@ -66,7 +66,7 @@ func TestAuth_SignUp(t *testing.T) {
 	es:= mock_email.NewMockSender(ctrl)
 	d := initDeps(hash, repo, tm,es)
 
-	authSrv := newAuthService(repo, hash, tm)
+	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID := uuid.New()
 	tests := []struct {
 		name         string
@@ -137,7 +137,7 @@ func TestAuth_SignIn(t *testing.T) {
 	es:= mock_email.NewMockSender(ctrl)
 	d := initDeps(hash, repo, tm,es)
 
-	authSrv := newAuthService(repo, hash, tm)
+	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID := uuid.New()
 	tests := []struct {
 		name         string
@@ -241,7 +241,7 @@ func TestAuth_LogOut(t *testing.T) {
 	es:= mock_email.NewMockSender(ctrl)
 	d := initDeps(hash, repo, tm,es)
 
-	authSrv := newAuthService(repo, hash, tm)
+	authSrv := newAuthService(repo, hash, tm, es)
 
 	tests := []struct {
 		name         string
@@ -302,7 +302,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 	es:= mock_email.NewMockSender(ctrl)
 	d := initDeps(hash, repo, tm,es)
 
-	authSrv := newAuthService(repo, hash, tm)
+	authSrv := newAuthService(repo, hash, tm, es)
 
 	tests := []struct {
 		name           string
@@ -396,7 +396,7 @@ func TestAuthService_GetUser(t *testing.T) {
 	es:= mock_email.NewMockSender(ctrl)
 	d := initDeps(hash, repo, tm,es)
 
-	authSrv := newAuthService(repo, hash, tm)
+	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID, _ := uuid.NewRandom()
 
 	tests := []struct {

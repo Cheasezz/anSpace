@@ -5,8 +5,8 @@ import (
 )
 
 type User struct {
-	Id           uuid.UUID `json:"-" db:"id"`
-	Email        string    `json:"email" db:"email"`
-	Username     string    `json:"username" db:"username"`
-	PasswordHash string    `json:"passwordHash" db:"password_hash"`
+	Id            uuid.UUID `json:"-" db:"id"`
+	Email         string    `json:"email" db:"email"`
+	Username      string    `json:"username" db:"username"`
+	PasswordHash  string    `json:"passwordHash" db:"password_hash"`
 }

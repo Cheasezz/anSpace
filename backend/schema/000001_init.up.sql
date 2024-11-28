@@ -15,3 +15,11 @@ CREATE TABLE IF NOT EXISTS users_sessions
   refresh_token VARCHAR(255) UNIQUE,
   expires_at    TIMESTAMP 
 );
+
+CREATE TABLE IF NOT EXISTS codes
+(
+  user_email         CITEXT       REFERENCES users (email) ON DELETE CASCADE NOT NULL,
+  code               VARCHAR(255) PRIMARY KEY DEFAULT substring(md5(random()::text), 0, 32),
+  code_type          VARCHAR(255) NOT NULL,
+  expires_at         TIMESTAMP 
+);

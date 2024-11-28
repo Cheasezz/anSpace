@@ -7,6 +7,7 @@ import (
 const (
 	userTable        = "users"
 	userSessionTable = "users_sessions"
+	codesTable       = "codes"
 )
 
 type Repository struct {

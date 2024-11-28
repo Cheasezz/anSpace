@@ -20,6 +20,6 @@ type Deps struct {
 
 func NewServices(d Deps) *Services {
 	return &Services{
-		Auth: newAuthService(d.Repos.Psql.Auth, d.Hasher, d.TokenManager),
+		Auth: newAuthService(d.Repos.Psql.Auth, d.Hasher, d.TokenManager, d.EmailSender),
 	}
 }
