@@ -9,10 +9,11 @@ import (
 )
 
 type Handlers struct {
+	Config config.HTTP
+	*Middlewares
 	*Auth
 }
 
-// TODO: token manager in no needed, remove from stuct. Clean tests
 type Deps struct {
 	Services     *service.Services
 	TokenManager auth.TokenManager
@@ -21,8 +22,11 @@ type Deps struct {
 }
 
 func NewHandlers(d Deps) *Handlers {
+	mdlwrs := NewMiddlewares(d)
 	return &Handlers{
-		Auth: NewAuthHandler(d),
+		Config:      d.ConfigHTTP,
+		Middlewares: mdlwrs,
+		Auth:        NewAuthHandler(d, mdlwrs),
 	}
 }
 

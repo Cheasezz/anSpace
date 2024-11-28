@@ -8,7 +8,6 @@ import (
 	"github.com/Cheasezz/anSpace/backend/config"
 	"github.com/Cheasezz/anSpace/backend/internal/core"
 	"github.com/Cheasezz/anSpace/backend/internal/service"
-	"github.com/Cheasezz/anSpace/backend/pkg/auth"
 	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
@@ -21,10 +20,10 @@ var (
 )
 
 type Auth struct {
-	service      service.Auth
-	TokenManager auth.TokenManager
-	Config       config.HTTP
-	log          logger.Logger
+	service service.Auth
+	config  config.HTTP
+	log     logger.Logger
+	mdlwrs  *Middlewares
 }
 
 func (h *Auth) initAuthRoutes(router *gin.RouterGroup) {
@@ -35,16 +34,16 @@ func (h *Auth) initAuthRoutes(router *gin.RouterGroup) {
 		auth.GET("/logout", h.logOut)
 		auth.POST("/genpassresetcode", h.genPassResetCode)
 		auth.POST("/refresh", h.refreshAccessToken)
-		auth.GET("/me", h.userIdentity, h.me)
+		auth.GET("/me", h.mdlwrs.userIdentity, h.me)
 	}
 }
 
-func NewAuthHandler(d Deps) *Auth {
+func NewAuthHandler(d Deps, m *Middlewares) *Auth {
 	return &Auth{
-		service:      d.Services.Auth,
-		TokenManager: d.TokenManager,
-		Config:       d.ConfigHTTP,
-		log:          d.Log,
+		service: d.Services.Auth,
+		config:  d.ConfigHTTP,
+		log:     d.Log,
+		mdlwrs:  m,
 	}
 }
 
@@ -79,7 +78,7 @@ func (h *Auth) signUp(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tokens, h.Config)
+	newTokenResponse(c, tokens, h.config)
 }
 
 // @Tags auth
@@ -113,7 +112,7 @@ func (h *Auth) signIn(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tokens, h.Config)
+	newTokenResponse(c, tokens, h.config)
 }
 
 // @Tags auth
@@ -139,7 +138,7 @@ func (h *Auth) logOut(c *gin.Context) {
 		return
 	}
 
-	newTokenResponse(c, tkns, h.Config)
+	newTokenResponse(c, tkns, h.config)
 }
 
 // @Tags auth
@@ -166,7 +165,7 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 	}
 
 	if tokens.Refresh.Token != "" {
-		newTokenResponse(c, tokens, h.Config)
+		newTokenResponse(c, tokens, h.config)
 		return
 	}
 
@@ -186,7 +185,7 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 // @Failure default {object} errorResponse
 // @Router /api/v1/me [get]
 func (h *Auth) me(c *gin.Context) {
-	usrId, err := getUserIdFrmCtx(c)
+	usrId, err := h.mdlwrs.getUserIdFrmCtx(c)
 	if err != nil {
 		newErrorResponse(c, h.log, http.StatusUnauthorized, err)
 		return
@@ -206,7 +205,7 @@ func (h *Auth) me(c *gin.Context) {
 // @Description generate and save password reset code into db. Sends code to email
 // @ID gen_pass_reset_code
 // @Produce  json
-// @Success 200 
+// @Success 200
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse

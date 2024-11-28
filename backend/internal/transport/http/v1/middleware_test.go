@@ -30,13 +30,14 @@ func TestAuth_userIdentity(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
 	handler.initAuthRoutes(v1)
 
-	r.GET("/protected", handler.userIdentity, func(ctx *gin.Context) {
+	r.GET("/protected", handler.mdlwrs.userIdentity, func(ctx *gin.Context) {
 		id, _ := ctx.Get(userCtx)
 		ctx.String(200, id.(string))
 	})
@@ -139,6 +140,17 @@ func Test_getUserIdFrmCtx(t *testing.T) {
 		return c
 	}
 	testUUID := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	authSrv := mock_service.NewMockAuth(ctrl)
+	tm := mock_auth.NewMockTokenManager(ctrl)
+	l := mock_logger.NewMockLogger(ctrl)
+
+	services := &service.Services{Auth: authSrv}
+	deps := initDeps(services, tm, l)
+
+	mdlwrs := NewMiddlewares(deps)
 	tests := []struct {
 		name string
 		c    *gin.Context
@@ -158,7 +170,7 @@ func Test_getUserIdFrmCtx(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			id, err := getUserIdFrmCtx(tt.c)
+			id, err := mdlwrs.getUserIdFrmCtx(tt.c)
 			if tt.fail {
 				require.Error(t, err)
 				require.EqualError(t, errUserIdNotFound, err.Error())

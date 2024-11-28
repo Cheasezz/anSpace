@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Cheasezz/anSpace/backend/pkg/auth"
+	"github.com/Cheasezz/anSpace/backend/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -21,26 +23,38 @@ var (
 	errAccessTokenIsExpired = fmt.Errorf("Token is expired")
 )
 
+type Middlewares struct {
+	TokenManager auth.TokenManager
+	log          logger.Logger
+}
+
+func NewMiddlewares(d Deps) *Middlewares {
+	return &Middlewares{
+		TokenManager: d.TokenManager,
+		log:          d.Log,
+	}
+}
+
 // Middleware for identify user with auth header
-func (h *Auth) userIdentity(c *gin.Context) {
+func (m *Middlewares) userIdentity(c *gin.Context) {
 	header := c.GetHeader(authorizationHeader)
 	if header == "" {
-		newErrorResponse(c, h.log, http.StatusUnauthorized, errEmptyAuthHeader)
+		newErrorResponse(c, m.log, http.StatusUnauthorized, errEmptyAuthHeader)
 		return
 	}
 	headerParts := strings.Split(header, " ")
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		newErrorResponse(c, h.log, http.StatusUnauthorized, errInvalidAuthHeader)
+		newErrorResponse(c, m.log, http.StatusUnauthorized, errInvalidAuthHeader)
 		return
 	}
 
-	userId, err := h.TokenManager.Parse(headerParts[1])
+	userId, err := m.TokenManager.Parse(headerParts[1])
 	if err != nil {
 		if err.Error() == errAccessTokenIsExpired.Error() {
-			newErrorResponse(c, h.log, http.StatusUnauthorized, err)
+			newErrorResponse(c, m.log, http.StatusUnauthorized, err)
 			return
 		}
-		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
+		newErrorResponse(c, m.log, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -48,7 +62,7 @@ func (h *Auth) userIdentity(c *gin.Context) {
 }
 
 // This function return user id from gin context
-func getUserIdFrmCtx(c *gin.Context) (uuid.UUID, error) {
+func (m *Middlewares) getUserIdFrmCtx(c *gin.Context) (uuid.UUID, error) {
 	id, ok := c.Get(userCtx)
 	if !ok {
 		return uuid.UUID{}, errUserIdNotFound

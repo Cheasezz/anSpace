@@ -111,8 +111,13 @@ func initDeps(s *service.Services, tm auth.TokenManager, l logger.Logger) Deps {
 	return Deps{
 		Services:     s,
 		TokenManager: tm,
-		ConfigHTTP:   config.HTTP{Host: "127.0.0.1", Port: "8000"},
-		Log:          l,
+		ConfigHTTP: config.HTTP{
+			Host:            "127.0.0.1",
+			Port:            "8000",
+			FrontendOrigins: []string{"http://localhost:5173"},
+			CookieHost:      "localhost",
+		},
+		Log: l,
 	}
 }
 
@@ -139,7 +144,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
@@ -250,7 +256,8 @@ func TestAuthHandler_signIn(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
@@ -331,7 +338,8 @@ func TestAuth_logOut(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
@@ -415,7 +423,8 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
@@ -509,7 +518,8 @@ func TestAuth_me(t *testing.T) {
 
 	services := &service.Services{Auth: authSrv}
 	deps := initDeps(services, tm, l)
-	handler := NewAuthHandler(deps)
+	mdlwrs := NewMiddlewares(deps)
+	handler := NewAuthHandler(deps, mdlwrs)
 
 	r := gin.New()
 	v1 := r.Group("/v1")
