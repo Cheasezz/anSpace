@@ -49,16 +49,16 @@ func NewAuthHandler(d Deps, m *Middlewares) *Auth {
 
 // @Tags auth
 // @Summary create account
-// @Description create account in data base and return access token in JSON and refresh token in cookies
+// @Description create account in db and return access token in JSON and refresh token in cookies
 // @ID create-account
 // @Accept  json
 // @Produce  json
-// @Param input body core.SignUp true "signUp input"
+// @Param input body core.AuthCredentials true "signUp input"
 // @Success 200 {object} tokenResponse
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /api/v1/auth/sign-up [post]
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
+// @Router /api/v1/auth/signup [post]
 func (h *Auth) signUp(c *gin.Context) {
 	var input core.AuthCredentials
 
@@ -87,12 +87,12 @@ func (h *Auth) signUp(c *gin.Context) {
 // @ID login-to-account
 // @Accept  json
 // @Produce  json
-// @Param input body core.SignIn true "signin input"
+// @Param input body core.AuthCredentials true "signin input"
 // @Success 200 {object} tokenResponse
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /api/v1/auth/sign-in [post]
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
+// @Router /api/v1/auth/signin [post]
 func (h *Auth) signIn(c *gin.Context) {
 	var input core.AuthCredentials
 
@@ -120,10 +120,11 @@ func (h *Auth) signIn(c *gin.Context) {
 // @Description accept refresh token from cookie, and return empty tokens
 // @ID logout
 // @Produce  json
+// @Param Cookie header string true "refresh token in cookies"
 // @Success 200 {object} tokenResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
 // @Router /api/v1/auth/logout [get]
 func (h *Auth) logOut(c *gin.Context) {
 	rt, err := c.Cookie(rtCookieName)
@@ -146,10 +147,11 @@ func (h *Auth) logOut(c *gin.Context) {
 // @Description accept refresh token from cookie, and return new access token
 // @ID refresh-access-token
 // @Produce  json
+// @Param Cookie header string true "refresh token in cookies"
 // @Success 200 {object} tokenResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
 // @Router /api/v1/auth/refresh [post]
 func (h *Auth) refreshAccessToken(c *gin.Context) {
 	refreshToken, err := c.Cookie(rtCookieName)
@@ -180,10 +182,11 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 // @ID me
 // @Produce  json
 // @Success 200 {object} userResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /api/v1/me [get]
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
+// @Security		AccessToken
+// @Router /api/v1/auth/me [get]
 func (h *Auth) me(c *gin.Context) {
 	usrId, err := h.mdlwrs.getUserIdFrmCtx(c)
 	if err != nil {
@@ -206,9 +209,9 @@ func (h *Auth) me(c *gin.Context) {
 // @ID gen_pass_reset_code
 // @Produce  json
 // @Success 200
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Failure default {object} ErrorResponse
 // @Router /api/v1/reset [post]
 func (h *Auth) genPassResetCode(c *gin.Context) {
 

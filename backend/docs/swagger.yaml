@@ -1,29 +1,25 @@
 basePath: /
 definitions:
-  core.SignIn:
+  core.AuthCredentials:
     properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  core.SignUp:
-    properties:
-      name:
+      email:
         type: string
       password:
         type: string
+    required:
+    - email
+    - password
+    type: object
+  core.User:
+    properties:
+      email:
+        type: string
+      passwordHash:
+        type: string
       username:
         type: string
-    required:
-    - name
-    - password
-    - username
     type: object
-  v1.errorResponse:
+  v1.ErrorResponse:
     properties:
       message:
         type: string
@@ -33,6 +29,11 @@ definitions:
       accessToken:
         type: string
     type: object
+  v1.userResponse:
+    properties:
+      user:
+        $ref: '#/definitions/core.User'
+    type: object
 host: localhost:8000
 info:
   contact: {}
@@ -40,10 +41,16 @@ info:
   title: AnSpace App API
   version: "1.0"
 paths:
-  /api/v1/auth/refresh:
-    post:
-      description: accept refresh token from cookie, and return new access token
-      operationId: refresh-access-token
+  /api/v1/auth/logout:
+    get:
+      description: accept refresh token from cookie, and return empty tokens
+      operationId: logout
+      parameters:
+      - description: refresh token in cookies
+        in: header
+        name: Cookie
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -54,19 +61,79 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
+      summary: logout
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      description: return curent username
+      operationId: me
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.userResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+      security:
+      - AccessToken: []
+      summary: return curent username
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      description: accept refresh token from cookie, and return new access token
+      operationId: refresh-access-token
+      parameters:
+      - description: refresh token in cookies
+        in: header
+        name: Cookie
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.tokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
       summary: refresh access token
       tags:
       - auth
-  /api/v1/auth/sign-in:
+  /api/v1/auth/signin:
     post:
       consumes:
       - application/json
@@ -79,7 +146,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/core.SignIn'
+          $ref: '#/definitions/core.AuthCredentials'
       produces:
       - application/json
       responses:
@@ -90,24 +157,24 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
       summary: login to account
       tags:
       - auth
-  /api/v1/auth/sign-up:
+  /api/v1/auth/signup:
     post:
       consumes:
       - application/json
-      description: create account in data base and return access token in JSON and
-        refresh token in cookies
+      description: create account in db and return access token in JSON and refresh
+        token in cookies
       operationId: create-account
       parameters:
       - description: signUp input
@@ -115,7 +182,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/core.SignUp'
+          $ref: '#/definitions/core.AuthCredentials'
       produces:
       - application/json
       responses:
@@ -126,20 +193,44 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
         default:
           description: ""
           schema:
-            $ref: '#/definitions/v1.errorResponse'
+            $ref: '#/definitions/v1.ErrorResponse'
       summary: create account
       tags:
       - auth
+  /api/v1/reset:
+    post:
+      description: generate and save password reset code into db. Sends code to email
+      operationId: gen_pass_reset_code
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/v1.ErrorResponse'
+      summary: generate password reset code
+      tags:
+      - auth
 securityDefinitions:
-  ApiKeyAuth:
+  AccessToken:
     in: header
     name: Authorization
     type: apiKey

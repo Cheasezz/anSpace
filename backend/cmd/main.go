@@ -15,7 +15,7 @@ import (
 // @host localhost:8000
 // @BasePath /
 
-// @securityDefinitions.apikey ApiKeyAuth
+// @securityDefinitions.apikey AccessToken
 // @in header
 // @name Authorization
 
