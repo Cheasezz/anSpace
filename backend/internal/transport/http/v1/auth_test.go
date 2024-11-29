@@ -2,6 +2,7 @@ package v1
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -55,7 +56,7 @@ func TestAuthHandler_validateEmailAndPass(t *testing.T) {
 		{
 			name: "correct email and password",
 			args: args{
-				l: "kappa@gmail.com",
+				l: "kappaa@gmail.com",
 				p: "qwerty123456",
 			},
 		},
@@ -70,7 +71,7 @@ func TestAuthHandler_validateEmailAndPass(t *testing.T) {
 		{
 			name: "empty password after trim",
 			args: args{
-				l: "kappa@gmail.com",
+				l: "kappaa@gmail.com",
 				p: " ",
 			},
 			expErr: errEmptyEmailOrPass,
@@ -78,7 +79,7 @@ func TestAuthHandler_validateEmailAndPass(t *testing.T) {
 		{
 			name: "short password",
 			args: args{
-				l: "kappa@gmail.com",
+				l: "kappaa@gmail.com",
 				p: "qwerty",
 			},
 			expErr: errShortPass,
@@ -86,7 +87,7 @@ func TestAuthHandler_validateEmailAndPass(t *testing.T) {
 		{
 			name: "wrong domin name in email",
 			args: args{
-				l: "kappa@gm-ail.com",
+				l: "kappaa@gm-ail.com",
 				p: "qwerty123456",
 			},
 			expErr: errIncorrectEmail,
@@ -133,9 +134,14 @@ func initTokens() auth.Tokens {
 	}
 }
 
-func TestAuthHandler_signUp(t *testing.T) {
-	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials)
+type Mocks struct {
+	sam *mock_service.MockAuth
+	tmm *mock_auth.MockTokenManager
+	lm  *mock_logger.MockLogger
+	cm  config.HTTP
+}
 
+func initMocks(t *testing.T) (Mocks, *gin.Engine) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	authSrv := mock_service.NewMockAuth(ctrl)
@@ -150,13 +156,23 @@ func TestAuthHandler_signUp(t *testing.T) {
 	r := gin.New()
 	v1 := r.Group("/v1")
 	handler.initAuthRoutes(v1)
+	return Mocks{sam: authSrv, tmm: tm, lm: l, cm: deps.ConfigHTTP}, r
+}
+
+func TestAuthHandler_signUp(t *testing.T) {
+	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials)
+
+	mockDeps, r := initMocks(t)
+
 	tests := []struct {
 		name            string
 		mockBehavior    mockBehavior
 		inputBody       string
 		AuthCredentials core.AuthCredentials
 		expStatCode     int
-		expReqBody      string
+		okReqBody       tokenResponse
+		isErr           bool
+		errReqBody      ErrorResponse
 	}{
 		{
 			name:            "OK",
@@ -166,7 +182,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(tokens, nil)
 			},
 			expStatCode: 200,
-			expReqBody:  fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
+			okReqBody:   tokenResponse{Access: tokens.Access},
 		},
 		{
 			name:            "Bad request: empty email",
@@ -176,7 +192,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: "Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"},
 		},
 		{
 			name:            "Bad request: empty password",
@@ -186,7 +203,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: "Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"},
 		},
 		{
 			name:            "Bad request: empty email after trim",
@@ -196,7 +214,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(errEmptyEmailOrPass)
 			},
 			expStatCode: 400,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyEmailOrPass),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errEmptyEmailOrPass.Error()},
 		},
 		{
 			name:            "Bad request: empty passwrod after trim",
@@ -206,7 +225,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(errEmptyEmailOrPass)
 			},
 			expStatCode: 400,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errEmptyEmailOrPass),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errEmptyEmailOrPass.Error()},
 		},
 		{
 			name:            "Bad request: password less then 12 char",
@@ -216,7 +236,8 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(errShortPass)
 			},
 			expStatCode: 400,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errShortPass),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errShortPass.Error()},
 		},
 		{
 			name:            "Server error: Service Sign Up error",
@@ -227,12 +248,13 @@ func TestAuthHandler_signUp(t *testing.T) {
 				l.EXPECT().Error(errServiceSignUp)
 			},
 			expStatCode: 500,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceSignUp),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errServiceSignUp.Error()},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.AuthCredentials)
+			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.AuthCredentials)
 
 			req := httptest.NewRequest(http.MethodPost, "/v1/auth/signup", bytes.NewBufferString(tt.inputBody))
 			w := httptest.NewRecorder()
@@ -240,7 +262,13 @@ func TestAuthHandler_signUp(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expStatCode, w.Code)
-			require.Equal(t, w.Body.String(), tt.expReqBody)
+			if tt.isErr {
+				res, _ := json.Marshal(tt.errReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			} else {
+				res, _ := json.Marshal(tt.okReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			}
 		})
 	}
 }
@@ -248,20 +276,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 func TestAuthHandler_signIn(t *testing.T) {
 	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, input core.AuthCredentials)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	authSrv := mock_service.NewMockAuth(ctrl)
-	tm := mock_auth.NewMockTokenManager(ctrl)
-	l := mock_logger.NewMockLogger(ctrl)
-
-	services := &service.Services{Auth: authSrv}
-	deps := initDeps(services, tm, l)
-	mdlwrs := NewMiddlewares(deps)
-	handler := NewAuthHandler(deps, mdlwrs)
-
-	r := gin.New()
-	v1 := r.Group("/v1")
-	handler.initAuthRoutes(v1)
+	mockDeps, r := initMocks(t)
 
 	tests := []struct {
 		name            string
@@ -269,7 +284,9 @@ func TestAuthHandler_signIn(t *testing.T) {
 		inputBody       string
 		AuthCredentials core.AuthCredentials
 		expStatCode     int
-		expReqBody      string
+		okReqBody       tokenResponse
+		isErr           bool
+		errReqBody      ErrorResponse
 	}{
 		{
 			name:            "OK",
@@ -279,7 +296,7 @@ func TestAuthHandler_signIn(t *testing.T) {
 				s.EXPECT().SignIn(gomock.Any(), input).Return(tokens, nil)
 			},
 			expStatCode: 200,
-			expReqBody:  fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
+			okReqBody:   tokenResponse{Access: tokens.Access},
 		},
 		{
 			name:            "Bad request: empty email",
@@ -289,7 +306,8 @@ func TestAuthHandler_signIn(t *testing.T) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: "Key: 'AuthCredentials.Email' Error:Field validation for 'Email' failed on the 'required' tag"},
 		},
 		{
 			name:            "Bad request: empty password",
@@ -299,7 +317,8 @@ func TestAuthHandler_signIn(t *testing.T) {
 				l.EXPECT().Error(gomock.Any())
 			},
 			expStatCode: 400,
-			expReqBody:  `{"message":"Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"}`,
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: "Key: 'AuthCredentials.Password' Error:Field validation for 'Password' failed on the 'required' tag"},
 		},
 		{
 			name:            "Server error: Service Sign In error",
@@ -310,19 +329,26 @@ func TestAuthHandler_signIn(t *testing.T) {
 				l.EXPECT().Error(errServiceSignIn)
 			},
 			expStatCode: 500,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceSignIn),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errServiceSignIn.Error()},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.AuthCredentials)
+			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.AuthCredentials)
 
 			req := httptest.NewRequest(http.MethodPost, "/v1/auth/signin", bytes.NewBufferString(tt.inputBody))
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expStatCode, w.Code)
-			require.Equal(t, w.Body.String(), tt.expReqBody)
+			if tt.isErr {
+				res, _ := json.Marshal(tt.errReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			} else {
+				res, _ := json.Marshal(tt.okReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			}
 		})
 	}
 }
@@ -330,27 +356,16 @@ func TestAuthHandler_signIn(t *testing.T) {
 func TestAuth_logOut(t *testing.T) {
 	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string, expTkn auth.Tokens)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	authSrv := mock_service.NewMockAuth(ctrl)
-	tm := mock_auth.NewMockTokenManager(ctrl)
-	l := mock_logger.NewMockLogger(ctrl)
-
-	services := &service.Services{Auth: authSrv}
-	deps := initDeps(services, tm, l)
-	mdlwrs := NewMiddlewares(deps)
-	handler := NewAuthHandler(deps, mdlwrs)
-
-	r := gin.New()
-	v1 := r.Group("/v1")
-	handler.initAuthRoutes(v1)
+	mockDeps, r := initMocks(t)
 
 	tests := []struct {
 		name         string
 		cookieName   string
 		rToken       string
 		expStatCode  int
-		expReqBody   string
+		okReqBody    tokenResponse
+		isErr        bool
+		errRqBody    ErrorResponse
 		expTokens    auth.Tokens
 		mockBehavior mockBehavior
 	}{
@@ -359,7 +374,7 @@ func TestAuth_logOut(t *testing.T) {
 			cookieName:  rtCookieName,
 			rToken:      "token",
 			expStatCode: 200,
-			expReqBody:  `{"accessToken":""}`,
+			okReqBody:   tokenResponse{Access: ""},
 			expTokens:   auth.Tokens{Access: "", Refresh: auth.RTInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, rt string, expTkn auth.Tokens) {
 				s.EXPECT().LogOut(gomock.Any(), rt).Return(expTkn, nil)
@@ -368,7 +383,8 @@ func TestAuth_logOut(t *testing.T) {
 		{
 			name:        "empty cookie name",
 			expStatCode: 401,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, http.ErrNoCookie),
+			isErr:       true,
+			errRqBody:   ErrorResponse{Message: http.ErrNoCookie.Error()},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, rt string, expTkn auth.Tokens) {
 				l.EXPECT().Error(http.ErrNoCookie)
 			},
@@ -378,7 +394,8 @@ func TestAuth_logOut(t *testing.T) {
 			cookieName:  rtCookieName,
 			rToken:      "token",
 			expStatCode: 500,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceLogOut),
+			isErr:       true,
+			errRqBody:   ErrorResponse{Message: errServiceLogOut.Error()},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, rt string, expTkn auth.Tokens) {
 				s.EXPECT().LogOut(gomock.Any(), rt).Return(expTkn, errServiceLogOut)
 				l.EXPECT().Error(errServiceLogOut)
@@ -387,7 +404,7 @@ func TestAuth_logOut(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.rToken, tt.expTokens)
+			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.rToken, tt.expTokens)
 
 			req := httptest.NewRequest(http.MethodGet, "/v1/auth/logout", nil)
 			req.AddCookie(&http.Cookie{
@@ -396,7 +413,7 @@ func TestAuth_logOut(t *testing.T) {
 				MaxAge:   tokens.Refresh.TTLInSec,
 				Expires:  tokens.Refresh.ExpiresAt,
 				Path:     "/",
-				Domain:   deps.ConfigHTTP.Host,
+				Domain:   mockDeps.cm.Host,
 				HttpOnly: true,
 				SameSite: http.SameSiteNoneMode,
 				Secure:   true,
@@ -406,7 +423,13 @@ func TestAuth_logOut(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expStatCode, w.Code)
-			require.Equal(t, w.Body.String(), tt.expReqBody)
+			if tt.isErr {
+				res, _ := json.Marshal(tt.errRqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			} else {
+				res, _ := json.Marshal(tt.okReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			}
 			require.Empty(t, w.Result().Header.Get(rtCookieName))
 		})
 	}
@@ -415,40 +438,27 @@ func TestAuth_logOut(t *testing.T) {
 func TestAuth_refreshAccessToken(t *testing.T) {
 	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	authSrv := mock_service.NewMockAuth(ctrl)
-	tm := mock_auth.NewMockTokenManager(ctrl)
-	l := mock_logger.NewMockLogger(ctrl)
-
-	services := &service.Services{Auth: authSrv}
-	deps := initDeps(services, tm, l)
-	mdlwrs := NewMiddlewares(deps)
-	handler := NewAuthHandler(deps, mdlwrs)
-
-	r := gin.New()
-	v1 := r.Group("/v1")
-	handler.initAuthRoutes(v1)
+	mockDeps, r := initMocks(t)
 
 	tests := []struct {
 		name         string
 		mockBehavior mockBehavior
-		// tokens       auth.Tokens
 		cookieName   string
 		refreshToken string
 		expStatCode  int
-		expReqBody   string
+		okReqBody    tokenResponse
+		isErr        bool
+		errReqBody   ErrorResponse
 	}{
 		{
 			name: "ok (upd both tokens)",
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string) {
 				s.EXPECT().RefreshAccessToken(gomock.Any(), refreshToken).Return(tokens, nil)
 			},
-			// tokens: initTokens(),
 			cookieName:   "RefreshToken",
 			refreshToken: "token",
 			expStatCode:  200,
-			expReqBody:   fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
+			okReqBody:    tokenResponse{Access: tokens.Access},
 		},
 		{
 			name: "ok (upd access token only)",
@@ -458,7 +468,7 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 			cookieName:   "RefreshToken",
 			refreshToken: "token",
 			expStatCode:  200,
-			expReqBody:   fmt.Sprintf(`{"accessToken":"%s"}`, tokens.Access),
+			okReqBody:    tokenResponse{Access: tokens.Access},
 		},
 		{
 			name: "StatusUnauthorized: empty cookie name",
@@ -466,7 +476,8 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 				l.EXPECT().Error(http.ErrNoCookie)
 			},
 			expStatCode: 401,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, http.ErrNoCookie),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: http.ErrNoCookie.Error()},
 		},
 		{
 			name: "Server error: Service Refresh Access Token error",
@@ -477,12 +488,13 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 			cookieName:   "RefreshToken",
 			refreshToken: "token",
 			expStatCode:  500,
-			expReqBody:   fmt.Sprintf(`{"message":"%s"}`, errServiceRefreshAccessToken),
+			isErr:        true,
+			errReqBody:   ErrorResponse{Message: errServiceRefreshAccessToken.Error()},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.refreshToken)
+			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.refreshToken)
 
 			req := httptest.NewRequest(http.MethodPost, "/v1/auth/refresh", nil)
 			req.AddCookie(&http.Cookie{
@@ -491,7 +503,7 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 				MaxAge:   tokens.Refresh.TTLInSec,
 				Expires:  tokens.Refresh.ExpiresAt,
 				Path:     "/",
-				Domain:   deps.ConfigHTTP.Host,
+				Domain:   mockDeps.cm.Host,
 				HttpOnly: true,
 				SameSite: http.SameSiteNoneMode,
 				Secure:   true,
@@ -501,7 +513,13 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expStatCode, w.Code)
-			require.Equal(t, w.Body.String(), tt.expReqBody)
+			if tt.isErr {
+				res, _ := json.Marshal(tt.errReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			} else {
+				res, _ := json.Marshal(tt.okReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			}
 
 		})
 	}
@@ -510,36 +528,25 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 func TestAuth_me(t *testing.T) {
 	type mockBehavior func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	authSrv := mock_service.NewMockAuth(ctrl)
-	tm := mock_auth.NewMockTokenManager(ctrl)
-	l := mock_logger.NewMockLogger(ctrl)
+	mockDeps, r := initMocks(t)
 
-	services := &service.Services{Auth: authSrv}
-	deps := initDeps(services, tm, l)
-	mdlwrs := NewMiddlewares(deps)
-	handler := NewAuthHandler(deps, mdlwrs)
-
-	r := gin.New()
-	v1 := r.Group("/v1")
-	handler.initAuthRoutes(v1)
 	testUUID := uuid.New()
 	tests := []struct {
-		name        string
-		accessToken string
-		expStatCode int
-		expReqBody  string
-		// expErrReqBody string
+		name         string
+		accessToken  string
+		expStatCode  int
+		okReqBody    userResponse
+		isErr        bool
+		errReqBody   ErrorResponse
 		mockBehavior mockBehavior
 	}{
 		{
 			name:        "ok",
 			accessToken: "acToken",
 			expStatCode: 200,
-			expReqBody:  `{"user":{"email":"kappa@gmail.com","username":"qwertasd","passwordHash":"fj487sj"}}`,
+			okReqBody:   userResponse{User: core.User{Email: "kappa@gmail.com", Username: "qwertasd", PasswordHash: "fj487sj"}},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
-				tm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
+				mockDeps.tmm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
 				s.EXPECT().GetUser(gomock.Any(), testUUID).Return(core.User{
 					Id:           testUUID,
 					Email:        "kappa@gmail.com",
@@ -552,9 +559,10 @@ func TestAuth_me(t *testing.T) {
 			name:        "error service GetUser",
 			accessToken: "acToken",
 			expStatCode: 401,
-			expReqBody:  fmt.Sprintf(`{"message":"%s"}`, errServiceGetUser),
+			isErr:       true,
+			errReqBody:  ErrorResponse{Message: errServiceGetUser.Error()},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, accessToken string) {
-				tm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
+				mockDeps.tmm.EXPECT().Parse(accessToken).Return(testUUID.String(), nil).Times(1)
 				s.EXPECT().GetUser(gomock.Any(), testUUID).Return(core.User{}, errServiceGetUser).Times(1)
 				l.EXPECT().Error(errServiceGetUser)
 			},
@@ -562,7 +570,7 @@ func TestAuth_me(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBehavior(authSrv, l, tt.accessToken)
+			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.accessToken)
 
 			req := httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil)
 			req.Header.Add(authorizationHeader, fmt.Sprintf("Bearer %s", tt.accessToken))
@@ -571,7 +579,13 @@ func TestAuth_me(t *testing.T) {
 			r.ServeHTTP(w, req)
 
 			require.Equal(t, tt.expStatCode, w.Code)
-			require.Equal(t, w.Body.String(), tt.expReqBody)
+			if tt.isErr {
+				res, _ := json.Marshal(tt.errReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			} else {
+				res, _ := json.Marshal(tt.okReqBody)
+				require.Equal(t, w.Body.String(), string(res))
+			}
 		})
 	}
 }
