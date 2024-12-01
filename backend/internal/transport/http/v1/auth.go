@@ -127,7 +127,7 @@ func (h *Auth) signIn(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
-// @Router /api/v1/auth/logout [get]
+// @Router /api/v1/auth/logout [delete]
 func (h *Auth) logOut(c *gin.Context) {
 	rt, err := c.Cookie(rtCookieName)
 	if err != nil {

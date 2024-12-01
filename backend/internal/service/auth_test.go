@@ -31,8 +31,10 @@ func initTokens() auth.Tokens {
 	tokenStr := "token"
 
 	return auth.Tokens{
-		Access: tokenStr,
-		Refresh: auth.RTInfo{
+		Access: auth.ATknInfo{
+			Token: tokenStr,
+		},
+		Refresh: auth.RTknInfo{
 			Token:     tokenStr,
 			ExpiresAt: time.Now().Add(time.Hour).UTC(),
 			TTLInSec:  43000},
@@ -63,8 +65,8 @@ func TestAuth_SignUp(t *testing.T) {
 	repo := mock_psql.NewMockAuth(ctrl)
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	es:= mock_email.NewMockSender(ctrl)
-	d := initDeps(hash, repo, tm,es)
+	es := mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm, es)
 
 	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID := uuid.New()
@@ -82,7 +84,7 @@ func TestAuth_SignUp(t *testing.T) {
 			mockBehavior: func(d deps, input core.AuthCredentials, session core.Session) {
 				d.h.EXPECT().Hash(input.Password).Return(input.Password, nil)
 				d.r.EXPECT().CreateUser(gomock.Any(), input).Return(testUUID, nil)
-				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access, nil)
+				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access.Token, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), session).Return(nil)
 			},
@@ -134,8 +136,8 @@ func TestAuth_SignIn(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	es:= mock_email.NewMockSender(ctrl)
-	d := initDeps(hash, repo, tm,es)
+	es := mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm, es)
 
 	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID := uuid.New()
@@ -153,7 +155,7 @@ func TestAuth_SignIn(t *testing.T) {
 			mockBehavior: func(d deps, i core.AuthCredentials, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
 				d.r.EXPECT().GetUserIdByLogPas(gomock.Any(), i).Return(testUUID, nil)
-				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access, nil)
+				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access.Token, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), s).Return(nil)
 			},
@@ -193,8 +195,8 @@ func TestAuth_SignIn(t *testing.T) {
 			mockBehavior: func(d deps, i core.AuthCredentials, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
 				d.r.EXPECT().GetUserIdByLogPas(gomock.Any(), i).Return(testUUID, nil)
-				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access, nil)
-				d.tm.EXPECT().NewRefreshToken().Return(auth.RTInfo{}, errNewRefreshToken)
+				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access.Token, nil)
+				d.tm.EXPECT().NewRefreshToken().Return(auth.RTknInfo{}, errNewRefreshToken)
 			},
 		},
 		{
@@ -205,7 +207,7 @@ func TestAuth_SignIn(t *testing.T) {
 			mockBehavior: func(d deps, i core.AuthCredentials, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
 				d.r.EXPECT().GetUserIdByLogPas(gomock.Any(), i).Return(testUUID, nil)
-				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access, nil)
+				d.tm.EXPECT().NewJWT(testUUID.String()).Return(tokens.Access.Token, nil)
 				d.tm.EXPECT().NewRefreshToken().Return(tokens.Refresh, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), s).Return(errRepo)
 			},
@@ -238,8 +240,8 @@ func TestAuth_LogOut(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	es:= mock_email.NewMockSender(ctrl)
-	d := initDeps(hash, repo, tm,es)
+	es := mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm, es)
 
 	authSrv := newAuthService(repo, hash, tm, es)
 
@@ -255,7 +257,7 @@ func TestAuth_LogOut(t *testing.T) {
 			name:      "ok",
 			rToken:    "token",
 			session:   initSession(),
-			expTokens: auth.Tokens{Refresh: auth.RTInfo{ExpiresAt: time.Now()}},
+			expTokens: auth.Tokens{Refresh: auth.RTknInfo{ExpiresAt: time.Now()}},
 			mockBehavior: func(d deps, rt string, s core.Session) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), rt).Return(s, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any())
@@ -265,7 +267,7 @@ func TestAuth_LogOut(t *testing.T) {
 			name:      "repo get by refresh token error",
 			rToken:    "token",
 			session:   core.Session{},
-			expTokens: auth.Tokens{Refresh: auth.RTInfo{ExpiresAt: time.Now()}},
+			expTokens: auth.Tokens{Refresh: auth.RTknInfo{ExpiresAt: time.Now()}},
 			expErr:    errRepoGetUserSessionByRefreshToken,
 			mockBehavior: func(d deps, rt string, s core.Session) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), rt).Return(s, errRepoGetUserSessionByRefreshToken)
@@ -299,8 +301,8 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	es:= mock_email.NewMockSender(ctrl)
-	d := initDeps(hash, repo, tm,es)
+	es := mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm, es)
 
 	authSrv := newAuthService(repo, hash, tm, es)
 
@@ -314,7 +316,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 	}{
 		{
 			name:           "ok (upd access token only)",
-			tokens:         auth.Tokens{Access: "token"},
+			tokens:         auth.Tokens{Access: auth.ATknInfo{Token: "token"}},
 			session:        initSession(),
 			dayUntilExpire: 20,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
@@ -332,7 +334,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
 				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId.String()).Return("newToken", nil)
-				d.tm.EXPECT().NewRefreshToken().Return(auth.RTInfo{Token: "newToken"}, nil)
+				d.tm.EXPECT().NewRefreshToken().Return(auth.RTknInfo{Token: "newToken"}, nil)
 				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any()).Return(nil)
 			},
 		},
@@ -393,8 +395,8 @@ func TestAuthService_GetUser(t *testing.T) {
 	hash := mock_hash.NewMockPasswordHasher(ctrl)
 	repo := mock_psql.NewMockAuth(ctrl)
 	tm := mock_auth.NewMockTokenManager(ctrl)
-	es:= mock_email.NewMockSender(ctrl)
-	d := initDeps(hash, repo, tm,es)
+	es := mock_email.NewMockSender(ctrl)
+	d := initDeps(hash, repo, tm, es)
 
 	authSrv := newAuthService(repo, hash, tm, es)
 	testUUID, _ := uuid.NewRandom()

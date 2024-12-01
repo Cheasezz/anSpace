@@ -126,8 +126,10 @@ func initTokens() auth.Tokens {
 	tokenStr := "token"
 
 	return auth.Tokens{
-		Access: tokenStr,
-		Refresh: auth.RTInfo{
+		Access: auth.ATknInfo{
+			Token: tokenStr,
+		},
+		Refresh: auth.RTknInfo{
 			Token:     tokenStr,
 			ExpiresAt: time.Now().Add(time.Hour),
 			TTLInSec:  43000},
@@ -170,7 +172,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 		inputBody       string
 		AuthCredentials core.AuthCredentials
 		expStatCode     int
-		okReqBody       tokenResponse
+		okReqBody       auth.ATknInfo
 		isErr           bool
 		errReqBody      ErrorResponse
 	}{
@@ -182,7 +184,7 @@ func TestAuthHandler_signUp(t *testing.T) {
 				s.EXPECT().SignUp(gomock.Any(), AuthCredentials).Return(tokens, nil)
 			},
 			expStatCode: 200,
-			okReqBody:   tokenResponse{Access: tokens.Access},
+			okReqBody:   tokens.Access,
 		},
 		{
 			name:            "Bad request: empty email",
@@ -284,7 +286,7 @@ func TestAuthHandler_signIn(t *testing.T) {
 		inputBody       string
 		AuthCredentials core.AuthCredentials
 		expStatCode     int
-		okReqBody       tokenResponse
+		okReqBody       auth.ATknInfo
 		isErr           bool
 		errReqBody      ErrorResponse
 	}{
@@ -296,7 +298,7 @@ func TestAuthHandler_signIn(t *testing.T) {
 				s.EXPECT().SignIn(gomock.Any(), input).Return(tokens, nil)
 			},
 			expStatCode: 200,
-			okReqBody:   tokenResponse{Access: tokens.Access},
+			okReqBody:   tokens.Access,
 		},
 		{
 			name:            "Bad request: empty email",
@@ -363,7 +365,7 @@ func TestAuth_logOut(t *testing.T) {
 		cookieName   string
 		rToken       string
 		expStatCode  int
-		okReqBody    tokenResponse
+		okReqBody    auth.ATknInfo
 		isErr        bool
 		errRqBody    ErrorResponse
 		expTokens    auth.Tokens
@@ -374,8 +376,8 @@ func TestAuth_logOut(t *testing.T) {
 			cookieName:  rtCookieName,
 			rToken:      "token",
 			expStatCode: 200,
-			okReqBody:   tokenResponse{Access: ""},
-			expTokens:   auth.Tokens{Access: "", Refresh: auth.RTInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}},
+			okReqBody:   auth.ATknInfo{Token: ""},
+			expTokens:   auth.Tokens{Access: auth.ATknInfo{Token: ""}, Refresh: auth.RTknInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}},
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, rt string, expTkn auth.Tokens) {
 				s.EXPECT().LogOut(gomock.Any(), rt).Return(expTkn, nil)
 			},
@@ -406,7 +408,7 @@ func TestAuth_logOut(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockBehavior(mockDeps.sam, mockDeps.lm, tt.rToken, tt.expTokens)
 
-			req := httptest.NewRequest(http.MethodGet, "/v1/auth/logout", nil)
+			req := httptest.NewRequest(http.MethodDelete, "/v1/auth/logout", nil)
 			req.AddCookie(&http.Cookie{
 				Name:     tt.cookieName,
 				Value:    tt.rToken,
@@ -446,7 +448,7 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 		cookieName   string
 		refreshToken string
 		expStatCode  int
-		okReqBody    tokenResponse
+		okReqBody    auth.ATknInfo
 		isErr        bool
 		errReqBody   ErrorResponse
 	}{
@@ -458,17 +460,17 @@ func TestAuth_refreshAccessToken(t *testing.T) {
 			cookieName:   "RefreshToken",
 			refreshToken: "token",
 			expStatCode:  200,
-			okReqBody:    tokenResponse{Access: tokens.Access},
+			okReqBody:    tokens.Access,
 		},
 		{
 			name: "ok (upd access token only)",
 			mockBehavior: func(s *mock_service.MockAuth, l *mock_logger.MockLogger, refreshToken string) {
-				s.EXPECT().RefreshAccessToken(gomock.Any(), refreshToken).Return(auth.Tokens{Access: "token"}, nil)
+				s.EXPECT().RefreshAccessToken(gomock.Any(), refreshToken).Return(auth.Tokens{Access: auth.ATknInfo{Token: "token"}}, nil)
 			},
 			cookieName:   "RefreshToken",
 			refreshToken: "token",
 			expStatCode:  200,
-			okReqBody:    tokenResponse{Access: tokens.Access},
+			okReqBody:    tokens.Access,
 		},
 		{
 			name: "StatusUnauthorized: empty cookie name",

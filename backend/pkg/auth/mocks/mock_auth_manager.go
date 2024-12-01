@@ -56,10 +56,10 @@ func (mr *MockTokenManagerMockRecorder) NewJWT(userId any) *gomock.Call {
 }
 
 // NewRefreshToken mocks base method.
-func (m *MockTokenManager) NewRefreshToken() (auth.RTInfo, error) {
+func (m *MockTokenManager) NewRefreshToken() (auth.RTknInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewRefreshToken")
-	ret0, _ := ret[0].(auth.RTInfo)
+	ret0, _ := ret[0].(auth.RTknInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
