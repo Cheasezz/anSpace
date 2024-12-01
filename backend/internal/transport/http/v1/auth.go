@@ -68,7 +68,11 @@ func (h *Auth) signUp(c *gin.Context) {
 		return
 	}
 
-	if err := h.validateEmailAndPass(input.Email, input.Password); err != nil {
+	if err := h.validateEmail(input.Email); err != nil {
+		newErrorResponse(c, h.log, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.validatePass(input.Password); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)
 		return
 	}
@@ -103,7 +107,11 @@ func (h *Auth) signIn(c *gin.Context) {
 		return
 	}
 
-	if err := h.validateEmailAndPass(input.Email, input.Password); err != nil {
+	if err := h.validateEmail(input.Email); err != nil {
+		newErrorResponse(c, h.log, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.validatePass(input.Password); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)
 		return
 	}
@@ -223,6 +231,11 @@ func (h *Auth) genPassResetCode(c *gin.Context) {
 		return
 	}
 
+	if err := h.validateEmail(email.Email); err != nil {
+		newErrorResponse(c, h.log, http.StatusBadRequest, err)
+		return
+	}
+
 	if err := h.service.GenPassResetCode(c, email.Email); err != nil {
 		newErrorResponse(c, h.log, http.StatusInternalServerError, err)
 		return
@@ -232,21 +245,52 @@ func (h *Auth) genPassResetCode(c *gin.Context) {
 }
 
 // TODO: Separate validation for email and pass
-func (h *Auth) validateEmailAndPass(e string, p string) error {
+// func (h *Auth) validateEmailAndPass(e string, p string) error {
+// 	var (
+// 		trimE = strings.TrimSpace(e)
+// 		trimP = strings.TrimSpace(p)
+// 	)
+
+// 	if len(trimE) == 0 || len(trimP) == 0 {
+// 		return errEmptyEmailOrPass
+// 	}
+
+// 	if ok := govalidator.MinStringLength(trimP, "12"); !ok {
+// 		return errShortPass
+// 	}
+// 	if ok := govalidator.IsExistingEmail(trimE); !ok {
+// 		return errIncorrectEmail
+// 	}
+// 	return nil
+// }
+
+func (h *Auth) validateEmail(email string) error {
 	var (
-		trimE = strings.TrimSpace(e)
-		trimP = strings.TrimSpace(p)
+		trimE = strings.TrimSpace(email)
 	)
 
-	if len(trimE) == 0 || len(trimP) == 0 {
+	if len(trimE) == 0 {
+		return errEmptyEmailOrPass
+	}
+
+	if ok := govalidator.IsExistingEmail(trimE); !ok {
+		return errIncorrectEmail
+	}
+	return nil
+}
+
+func (h *Auth) validatePass(pass string) error {
+	var (
+		trimP = strings.TrimSpace(pass)
+	)
+
+	if len(trimP) == 0 {
 		return errEmptyEmailOrPass
 	}
 
 	if ok := govalidator.MinStringLength(trimP, "12"); !ok {
 		return errShortPass
 	}
-	if ok := govalidator.IsExistingEmail(trimE); !ok {
-		return errIncorrectEmail
-	}
+
 	return nil
 }

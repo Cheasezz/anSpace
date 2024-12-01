@@ -42,60 +42,69 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func TestAuthHandler_validateEmailAndPass(t *testing.T) {
-	type args struct {
-		l string
-		p string
-	}
+func TestAuthHandler_validateEmail(t *testing.T) {
 	tests := []struct {
 		name   string
 		h      *Auth
-		args   args
+		l      string
 		expErr error
 	}{
 		{
-			name: "correct email and password",
-			args: args{
-				l: "kappaa@gmail.com",
-				p: "qwerty123456",
-			},
+			name: "correct email",
+			l:    "kappaa@gmail.com",
 		},
 		{
-			name: "empty email after trim",
-			args: args{
-				l: " ",
-				p: "qwerty123456",
-			},
+			name:   "empty email after trim",
+			l:      " ",
 			expErr: errEmptyEmailOrPass,
 		},
+
 		{
-			name: "empty password after trim",
-			args: args{
-				l: "kappaa@gmail.com",
-				p: " ",
-			},
-			expErr: errEmptyEmailOrPass,
-		},
-		{
-			name: "short password",
-			args: args{
-				l: "kappaa@gmail.com",
-				p: "qwerty",
-			},
-			expErr: errShortPass,
-		},
-		{
-			name: "wrong domin name in email",
-			args: args{
-				l: "kappaa@gm-ail.com",
-				p: "qwerty123456",
-			},
+			name:   "wrong domin name in email",
+			l:      "kappaa@gm-ail.com",
 			expErr: errIncorrectEmail,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.h.validateEmailAndPass(tt.args.l, tt.args.p)
+			err := tt.h.validateEmail(tt.l)
+
+			if tt.expErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.EqualError(t, tt.expErr, err.Error())
+			}
+		})
+
+	}
+}
+
+func TestAuthHandler_validatePass(t *testing.T) {
+	tests := []struct {
+		name   string
+		h      *Auth
+		p      string
+		expErr error
+	}{
+		{
+			name: "correct password",
+			p:    "qwerty123456",
+		},
+		{
+			name:   "empty password after trim",
+			p:      " ",
+			expErr: errEmptyEmailOrPass,
+		},
+		{
+			name:   "short password",
+			p:      "qwerty",
+			expErr: errShortPass,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.h.validatePass(tt.p)
 
 			if tt.expErr == nil {
 				require.NoError(t, err)
