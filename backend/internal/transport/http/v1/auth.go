@@ -31,8 +31,8 @@ func (h *Auth) initAuthRoutes(router *gin.RouterGroup) {
 	{
 		auth.POST("/signup", h.signUp)
 		auth.POST("/signin", h.signIn)
-		auth.GET("/logout", h.logOut)
-		auth.POST("/genpassresetcode", h.genPassResetCode)
+		auth.DELETE("/logout", h.logOut)
+		auth.POST("/genpasrcode", h.genPassResetCode)
 		auth.POST("/refresh", h.refreshAccessToken)
 		auth.GET("/me", h.mdlwrs.userIdentity, h.me)
 	}
@@ -55,6 +55,7 @@ func NewAuthHandler(d Deps, m *Middlewares) *Auth {
 // @Produce  json
 // @Param input body core.AuthCredentials true "signUp input"
 // @Success 200 {object} tokenResponse
+// @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
@@ -89,6 +90,7 @@ func (h *Auth) signUp(c *gin.Context) {
 // @Produce  json
 // @Param input body core.AuthCredentials true "signin input"
 // @Success 200 {object} tokenResponse
+// @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
@@ -121,7 +123,7 @@ func (h *Auth) signIn(c *gin.Context) {
 // @ID logout
 // @Produce  json
 // @Param Cookie header string true "refresh token in cookies"
-// @Success 200 {object} tokenResponse
+// @Success 200 {object} tokenResponse "response has emty accessToken"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
@@ -185,7 +187,7 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
-// @Security		AccessToken
+// @Security		bearerAuth
 // @Router /api/v1/auth/me [get]
 func (h *Auth) me(c *gin.Context) {
 	usrId, err := h.mdlwrs.getUserIdFrmCtx(c)
@@ -207,18 +209,15 @@ func (h *Auth) me(c *gin.Context) {
 // @Summary generate password reset code
 // @Description generate and save password reset code into db. Sends code to email
 // @ID gen_pass_reset_code
+// @Param email body core.Email true "email input"
 // @Produce  json
-// @Success 200
+// @Success 200 "password reset code saved in db and sent on specified email"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
-// @Router /api/v1/reset [post]
+// @Router /api/v1/genpasrcode [post]
 func (h *Auth) genPassResetCode(c *gin.Context) {
-
-	type Email struct {
-		Email string `json:"email"`
-	}
-	var email Email
+	var email core.Email
 
 	if err := c.ShouldBindJSON(&email); err != nil {
 		newErrorResponse(c, h.log, http.StatusBadRequest, err)

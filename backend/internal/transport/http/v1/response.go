@@ -15,11 +15,12 @@ type ErrorResponse struct {
 }
 
 type tokenResponse struct {
-	Access string `json:"accessToken"`
+	Access string `json:"accessToken" example:"eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"`
 }
 
 type userResponse struct {
 	User core.User `json:"user"`
+	// ...Other entities related with user
 }
 
 const rtCookieName = "RefreshToken"

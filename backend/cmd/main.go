@@ -15,9 +15,10 @@ import (
 // @host localhost:8000
 // @BasePath /
 
-// @securityDefinitions.apikey AccessToken
+// @securityDefinitions.apikey bearerAuth
 // @in header
 // @name Authorization
+// @description Enter the token with the `Bearer: ` prefix
 
 func main() {
 	if err := godotenv.Load(); err != nil {

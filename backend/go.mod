@@ -9,14 +9,22 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/swag v1.16.4
 	go.uber.org/mock v0.5.0
 )
 
 require github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+require (
+	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/knz/go-libedit v1.10.1 // indirect
+	go.opentelemetry.io/otel v1.32.0 // indirect
+	go.opentelemetry.io/otel/metric v1.32.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
@@ -53,14 +61,14 @@ require (
 )
 
 require (
-	github.com/bytedance/sonic v1.12.4 // indirect
+	github.com/bytedance/sonic v1.12.5 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.22.1 // indirect
+	github.com/go-playground/validator/v10 v10.23.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -84,7 +92,7 @@ require (
 	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

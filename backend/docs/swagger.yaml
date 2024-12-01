@@ -3,12 +3,22 @@ definitions:
   core.AuthCredentials:
     properties:
       email:
+        example: example@gmail.com
         type: string
       password:
+        example: qwerty123456
         type: string
     required:
     - email
     - password
+    type: object
+  core.Email:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+    required:
+    - email
     type: object
   core.User:
     properties:
@@ -27,6 +37,7 @@ definitions:
   v1.tokenResponse:
     properties:
       accessToken:
+        example: eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0
         type: string
     type: object
   v1.userResponse:
@@ -42,7 +53,7 @@ info:
   version: "1.0"
 paths:
   /api/v1/auth/logout:
-    get:
+    delete:
       description: accept refresh token from cookie, and return empty tokens
       operationId: logout
       parameters:
@@ -55,7 +66,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: response has emty accessToken
           schema:
             $ref: '#/definitions/v1.tokenResponse'
         "401":
@@ -97,7 +108,7 @@ paths:
           schema:
             $ref: '#/definitions/v1.ErrorResponse'
       security:
-      - AccessToken: []
+      - bearerAuth: []
       summary: return curent username
       tags:
       - auth
@@ -152,6 +163,11 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            Set-Cookie:
+              description: 'refreshToken. Example: "RefreshToken=9838c59cff93e21;
+                Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" '
+              type: string
           schema:
             $ref: '#/definitions/v1.tokenResponse'
         "400":
@@ -188,6 +204,11 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            Set-Cookie:
+              description: 'refreshToken. Example: "RefreshToken=9838c59cff93e21;
+                Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" '
+              type: string
           schema:
             $ref: '#/definitions/v1.tokenResponse'
         "400":
@@ -205,15 +226,22 @@ paths:
       summary: create account
       tags:
       - auth
-  /api/v1/reset:
+  /api/v1/genpasrcode:
     post:
       description: generate and save password reset code into db. Sends code to email
       operationId: gen_pass_reset_code
+      parameters:
+      - description: email input
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/core.Email'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: password reset code saved in db and sent on specified email
         "401":
           description: Unauthorized
           schema:
@@ -230,7 +258,8 @@ paths:
       tags:
       - auth
 securityDefinitions:
-  AccessToken:
+  bearerAuth:
+    description: 'Enter the token with the `Bearer: ` prefix'
     in: header
     name: Authorization
     type: apiKey

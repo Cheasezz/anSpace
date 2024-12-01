@@ -16,7 +16,7 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/v1/auth/logout": {
-            "get": {
+            "delete": {
                 "description": "accept refresh token from cookie, and return empty tokens",
                 "produces": [
                     "application/json"
@@ -37,7 +37,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "response has emty accessToken",
                         "schema": {
                             "$ref": "#/definitions/v1.tokenResponse"
                         }
@@ -67,7 +67,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "AccessToken": []
+                        "bearerAuth": []
                     }
                 ],
                 "description": "return curent username",
@@ -185,6 +185,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/v1.tokenResponse"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "refreshToken. Example: \"RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None\" "
+                            }
                         }
                     },
                     "400": {
@@ -238,6 +244,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/v1.tokenResponse"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "refreshToken. Example: \"RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None\" "
+                            }
                         }
                     },
                     "400": {
@@ -261,7 +273,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/reset": {
+        "/api/v1/genpasrcode": {
             "post": {
                 "description": "generate and save password reset code into db. Sends code to email",
                 "produces": [
@@ -272,9 +284,20 @@ const docTemplate = `{
                 ],
                 "summary": "generate password reset code",
                 "operationId": "gen_pass_reset_code",
+                "parameters": [
+                    {
+                        "description": "email input",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/core.Email"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "password reset code saved in db and sent on specified email"
                     },
                     "401": {
                         "description": "Unauthorized",
@@ -307,10 +330,24 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "example@gmail.com"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "qwerty123456"
+                }
+            }
+        },
+        "core.Email": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
                 }
             }
         },
@@ -340,7 +377,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accessToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"
                 }
             }
         },
@@ -354,7 +392,8 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "AccessToken": {
+        "bearerAuth": {
+            "description": "Enter the token with the ` + "`" + `Bearer: ` + "`" + ` prefix",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
