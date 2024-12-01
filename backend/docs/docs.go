@@ -16,7 +16,7 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/v1/auth/logout": {
-            "delete": {
+            "get": {
                 "description": "accept refresh token from cookie, and return empty tokens",
                 "produces": [
                     "application/json"
@@ -132,6 +132,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/v1.tokenResponse"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "refreshToken. Example: \"RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None\" "
+                            }
                         }
                     },
                     "401": {

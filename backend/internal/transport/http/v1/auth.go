@@ -151,6 +151,7 @@ func (h *Auth) logOut(c *gin.Context) {
 // @Produce  json
 // @Param Cookie header string true "refresh token in cookies"
 // @Success 200 {object} tokenResponse
+// @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse

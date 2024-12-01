@@ -16,15 +16,7 @@ require (
 
 require github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 
-require (
-	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
-	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/knz/go-libedit v1.10.1 // indirect
-	go.opentelemetry.io/otel v1.32.0 // indirect
-	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-)
+require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
