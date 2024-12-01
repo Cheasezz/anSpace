@@ -14,10 +14,6 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-type tokenResponse struct {
-	Access string `json:"accessToken" example:"eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"`
-}
-
 type userResponse struct {
 	User core.User `json:"user"`
 	// ...Other entities related with user
@@ -33,7 +29,5 @@ func newErrorResponse(c *gin.Context, l logger.Logger, statusCode int, err error
 func newTokenResponse(c *gin.Context, t auth.Tokens, cfg config.HTTP) {
 	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(rtCookieName, t.Refresh.Token, t.Refresh.TTLInSec, "/", cfg.CookieHost, true, true)
-	c.JSON(http.StatusOK, tokenResponse{
-		Access: t.Access,
-	})
+	c.JSON(http.StatusOK, t.Access)
 }

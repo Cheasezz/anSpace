@@ -81,7 +81,7 @@ func (s *AuthService) SignIn(ctx context.Context, signIn core.AuthCredentials) (
 // Return empty auth.Tokens struct
 func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error) {
 
-	tkns := auth.Tokens{Access: "", Refresh: auth.RTInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}}
+	tkns := auth.Tokens{Access: auth.ATknInfo{Token: ""}, Refresh: auth.RTknInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}}
 	session, err := s.repo.GetUserSessionByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return tkns, err
@@ -104,7 +104,7 @@ func (s *AuthService) createSession(ctx context.Context, userId uuid.UUID) (auth
 		err    error
 	)
 
-	tokens.Access, err = s.tokenManager.NewJWT(userId.String())
+	tokens.Access.Token, err = s.tokenManager.NewJWT(userId.String())
 	if err != nil {
 		return auth.Tokens{}, err
 	}
@@ -150,7 +150,7 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 	if rtDayUntilExpire <= daysForUpdRtToken {
 		return s.createSession(ctx, session.UserId)
 	}
-	tokens.Access, err = s.tokenManager.NewJWT(session.UserId.String())
+	tokens.Access.Token, err = s.tokenManager.NewJWT(session.UserId.String())
 	if err != nil {
 		return auth.Tokens{}, err
 	}

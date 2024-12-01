@@ -39,7 +39,7 @@ const docTemplate = `{
                     "200": {
                         "description": "response has emty accessToken",
                         "schema": {
-                            "$ref": "#/definitions/v1.tokenResponse"
+                            "$ref": "#/definitions/auth.ATknInfo"
                         }
                     },
                     "401": {
@@ -131,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/v1.tokenResponse"
+                            "$ref": "#/definitions/auth.ATknInfo"
                         },
                         "headers": {
                             "Set-Cookie": {
@@ -190,7 +190,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/v1.tokenResponse"
+                            "$ref": "#/definitions/auth.ATknInfo"
                         },
                         "headers": {
                             "Set-Cookie": {
@@ -249,7 +249,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/v1.tokenResponse"
+                            "$ref": "#/definitions/auth.ATknInfo"
                         },
                         "headers": {
                             "Set-Cookie": {
@@ -328,6 +328,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.ATknInfo": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"
+                }
+            }
+        },
         "core.AuthCredentials": {
             "type": "object",
             "required": [
@@ -376,15 +385,6 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
-                }
-            }
-        },
-        "v1.tokenResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string",
-                    "example": "eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"
                 }
             }
         },

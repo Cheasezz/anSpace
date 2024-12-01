@@ -54,7 +54,7 @@ func NewAuthHandler(d Deps, m *Middlewares) *Auth {
 // @Accept  json
 // @Produce  json
 // @Param input body core.AuthCredentials true "signUp input"
-// @Success 200 {object} tokenResponse
+// @Success 200 {object} auth.ATknInfo
 // @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -89,7 +89,7 @@ func (h *Auth) signUp(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param input body core.AuthCredentials true "signin input"
-// @Success 200 {object} tokenResponse
+// @Success 200 {object} auth.ATknInfo
 // @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -123,7 +123,7 @@ func (h *Auth) signIn(c *gin.Context) {
 // @ID logout
 // @Produce  json
 // @Param Cookie header string true "refresh token in cookies"
-// @Success 200 {object} tokenResponse "response has emty accessToken"
+// @Success 200 {object} auth.ATknInfo "response has emty accessToken"
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Failure default {object} ErrorResponse
@@ -150,7 +150,7 @@ func (h *Auth) logOut(c *gin.Context) {
 // @ID refresh-access-token
 // @Produce  json
 // @Param Cookie header string true "refresh token in cookies"
-// @Success 200 {object} tokenResponse
+// @Success 200 {object} auth.ATknInfo
 // @Header 200 {string} Set-Cookie "refreshToken. Example: "RefreshToken=9838c59cff93e21; Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" "
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
@@ -174,9 +174,7 @@ func (h *Auth) refreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, tokenResponse{
-		Access: tokens.Access,
-	})
+	c.JSON(http.StatusOK, tokens.Access)
 }
 
 // @Tags auth

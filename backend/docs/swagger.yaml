@@ -1,5 +1,11 @@
 basePath: /
 definitions:
+  auth.ATknInfo:
+    properties:
+      accessToken:
+        example: eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0
+        type: string
+    type: object
   core.AuthCredentials:
     properties:
       email:
@@ -34,12 +40,6 @@ definitions:
       message:
         type: string
     type: object
-  v1.tokenResponse:
-    properties:
-      accessToken:
-        example: eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0
-        type: string
-    type: object
   v1.userResponse:
     properties:
       user:
@@ -68,7 +68,7 @@ paths:
         "200":
           description: response has emty accessToken
           schema:
-            $ref: '#/definitions/v1.tokenResponse'
+            $ref: '#/definitions/auth.ATknInfo'
         "401":
           description: Unauthorized
           schema:
@@ -133,7 +133,7 @@ paths:
                 Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" '
               type: string
           schema:
-            $ref: '#/definitions/v1.tokenResponse'
+            $ref: '#/definitions/auth.ATknInfo'
         "401":
           description: Unauthorized
           schema:
@@ -174,7 +174,7 @@ paths:
                 Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" '
               type: string
           schema:
-            $ref: '#/definitions/v1.tokenResponse'
+            $ref: '#/definitions/auth.ATknInfo'
         "400":
           description: Bad Request
           schema:
@@ -215,7 +215,7 @@ paths:
                 Path=/; Max-Age=2628000; HttpOnly; Secure; SameSite=None" '
               type: string
           schema:
-            $ref: '#/definitions/v1.tokenResponse'
+            $ref: '#/definitions/auth.ATknInfo'
         "400":
           description: Bad Request
           schema:

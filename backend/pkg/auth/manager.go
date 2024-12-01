@@ -13,7 +13,7 @@ import (
 type TokenManager interface {
 	NewJWT(userId string) (string, error)
 	Parse(accessToken string) (string, error)
-	NewRefreshToken() (RTInfo, error)
+	NewRefreshToken() (RTknInfo, error)
 	ValidateRefreshToken(expiresAt time.Time) (int, error)
 }
 
@@ -23,9 +23,19 @@ type Manager struct {
 	rtTTL      time.Duration
 }
 
+type RTknInfo struct {
+	Token     string
+	ExpiresAt time.Time
+	TTLInSec  int
+}
+
+type ATknInfo struct {
+	Token string `json:"accessToken" example:"eyJhbGciOVCJ9.eyJleHAiONAwMDk5In0.s8hOQjBtA0"`
+}
+
 type Tokens struct {
-	Access  string
-	Refresh RTInfo
+	Access  ATknInfo
+	Refresh RTknInfo
 }
 
 func NewManager(cfg config.TokenManager) (*Manager, error) {
@@ -70,23 +80,17 @@ func (m *Manager) Parse(accessToken string) (string, error) {
 	return claims["sub"].(string), nil
 }
 
-type RTInfo struct {
-	Token     string
-	ExpiresAt time.Time
-	TTLInSec  int
-}
-
-func (m *Manager) NewRefreshToken() (RTInfo, error) {
+func (m *Manager) NewRefreshToken() (RTknInfo, error) {
 	b := make([]byte, 32)
 
 	s := rand.NewSource(time.Now().UTC().Unix() + rand.Int63())
 	r := rand.New(s)
 
 	if _, err := r.Read(b); err != nil {
-		return RTInfo{}, err
+		return RTknInfo{}, err
 	}
 
-	refreshToken := RTInfo{
+	refreshToken := RTknInfo{
 		Token:     fmt.Sprintf("%x", b),
 		ExpiresAt: time.Now().Add(m.rtTTL).UTC(),
 		TTLInSec:  int(m.rtTTL.Seconds()),
