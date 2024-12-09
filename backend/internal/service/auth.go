@@ -23,10 +23,6 @@ type Auth interface {
 	GenPassResetCode(ctx context.Context, email string) error
 }
 
-var (
-	daysForUpdRtToken = 5
-)
-
 type AuthService struct {
 	repo         psql.Auth
 	hasher       hasher.PasswordHasher
@@ -81,13 +77,12 @@ func (s *AuthService) SignIn(ctx context.Context, signIn core.AuthCredentials) (
 // Return empty auth.Tokens struct
 func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tokens, error) {
 
-	tkns := auth.Tokens{Access: auth.ATknInfo{Token: ""}, Refresh: auth.RTknInfo{Token: "", ExpiresAt: time.Now(), TTLInSec: 0}}
+	tkns := auth.Tokens{Access: auth.ATknInfo{Token: ""}, Refresh: auth.RTknInfo{Token: ""}}
 	session, err := s.repo.GetUserSessionByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return tkns, err
 	}
 	session.RefreshToken = tkns.Refresh.Token
-	session.ExpiresAt = tkns.Refresh.ExpiresAt
 
 	if err = s.repo.SetSession(ctx, session); err != nil {
 		return auth.Tokens{}, err
@@ -118,7 +113,6 @@ func (s *AuthService) createSession(ctx context.Context, userId uuid.UUID) (auth
 	session := core.Session{
 		UserId:       userId,
 		RefreshToken: tokens.Refresh.Token,
-		ExpiresAt:    tokens.Refresh.ExpiresAt,
 	}
 
 	err = s.repo.SetSession(ctx, session)
@@ -129,9 +123,7 @@ func (s *AuthService) createSession(ctx context.Context, userId uuid.UUID) (auth
 	return tokens, nil
 }
 
-// If days until refresh token expired is equal or less then var daysForUpdRtToken
-// return auth.Tokens struct with uppdated access token and refresh token.
-// Else return auth.Tokens struct with uppdate access token only.
+// Return auth.Tokens struct with uppdate access token only.
 func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken string) (auth.Tokens, error) {
 	var (
 		tokens auth.Tokens
@@ -142,14 +134,6 @@ func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken strin
 		return tokens, err
 	}
 
-	rtDayUntilExpire, err := s.tokenManager.ValidateRefreshToken(session.ExpiresAt)
-	if err != nil {
-		return auth.Tokens{}, err
-	}
-
-	if rtDayUntilExpire <= daysForUpdRtToken {
-		return s.createSession(ctx, session.UserId)
-	}
 	tokens.Access.Token, err = s.tokenManager.NewJWT(session.UserId.String())
 	if err != nil {
 		return auth.Tokens{}, err

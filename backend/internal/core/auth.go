@@ -1,15 +1,12 @@
 package core
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
 type Session struct {
 	UserId       uuid.UUID `db:"user_id"`
 	RefreshToken string    `db:"refresh_token"`
-	ExpiresAt    time.Time `db:"expires_at"`
 }
 
 type AuthCredentials struct {

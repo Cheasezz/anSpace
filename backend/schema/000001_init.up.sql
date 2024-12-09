@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS users
 CREATE TABLE IF NOT EXISTS users_sessions
 (
   user_id       UUID          REFERENCES users (id) ON DELETE CASCADE NOT NULL,
-  refresh_token VARCHAR(255) UNIQUE,
-  expires_at    TIMESTAMP 
+  refresh_token VARCHAR(255) UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS codes

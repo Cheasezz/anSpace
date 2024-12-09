@@ -41,7 +41,7 @@ func initTokens() auth.Tokens {
 	}
 }
 func initSession() core.Session {
-	return core.Session{UserId: uuid.New(), RefreshToken: "token", ExpiresAt: time.Now().Add(time.Hour).UTC()}
+	return core.Session{UserId: uuid.New(), RefreshToken: "token"}
 }
 
 type deps struct {
@@ -80,7 +80,7 @@ func TestAuth_SignUp(t *testing.T) {
 		{
 			name:      "OK",
 			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token, ExpiresAt: tokens.Refresh.ExpiresAt},
+			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token},
 			mockBehavior: func(d deps, input core.AuthCredentials, session core.Session) {
 				d.h.EXPECT().Hash(input.Password).Return(input.Password, nil)
 				d.r.EXPECT().CreateUser(gomock.Any(), input).Return(testUUID, nil)
@@ -151,7 +151,7 @@ func TestAuth_SignIn(t *testing.T) {
 		{
 			name:      "OK",
 			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token, ExpiresAt: tokens.Refresh.ExpiresAt},
+			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token},
 			mockBehavior: func(d deps, i core.AuthCredentials, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
 				d.r.EXPECT().GetUserIdByLogPas(gomock.Any(), i).Return(testUUID, nil)
@@ -202,7 +202,7 @@ func TestAuth_SignIn(t *testing.T) {
 		{
 			name:      "repo set session error",
 			inputUser: core.AuthCredentials{Email: "Cheasezz@gmail.com", Password: "qwerty123456"},
-			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token, ExpiresAt: tokens.Refresh.ExpiresAt},
+			session:   core.Session{UserId: testUUID, RefreshToken: tokens.Refresh.Token},
 			expErr:    errRepo,
 			mockBehavior: func(d deps, i core.AuthCredentials, s core.Session) {
 				d.h.EXPECT().Hash(i.Password).Return(i.Password, nil)
@@ -321,21 +321,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			dayUntilExpire: 20,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
-				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId.String()).Return("newToken", nil)
-			},
-		},
-		{
-			name:           "ok (upd both tokens)",
-			tokens:         initTokens(),
-			session:        initSession(),
-			dayUntilExpire: 5,
-			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
-				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
-				d.tm.EXPECT().NewJWT(s.UserId.String()).Return("newToken", nil)
-				d.tm.EXPECT().NewRefreshToken().Return(auth.RTknInfo{Token: "newToken"}, nil)
-				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any()).Return(nil)
 			},
 		},
 		{
@@ -348,16 +334,6 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			},
 		},
 		{
-			name:    "tm refresh token is expired",
-			tokens:  initTokens(),
-			session: initSession(),
-			expErr:  errRefreshTokenIsExpired,
-			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
-				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
-				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(0, errRefreshTokenIsExpired)
-			},
-		},
-		{
 			name:           "tm new jwt error",
 			tokens:         initTokens(),
 			session:        initSession(),
@@ -365,7 +341,6 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 			expErr:         errNewJwt,
 			mockBehavior: func(d deps, tkns auth.Tokens, s core.Session, day int) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), tkns.Refresh.Token).Return(s, nil)
-				d.tm.EXPECT().ValidateRefreshToken(s.ExpiresAt).Return(day, nil)
 				d.tm.EXPECT().NewJWT(s.UserId.String()).Return("", errNewJwt)
 			},
 		},
