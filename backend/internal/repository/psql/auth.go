@@ -17,6 +17,7 @@ type Auth interface {
 	SetPassResetCode(ctx context.Context, code core.CodeCredentials) error
 	DeletePassResetCode(ctx context.Context, code core.CodeCredentials) error
 	SetSession(ctx context.Context, session core.Session) error
+	DeleteSession(ctx context.Context, session core.Session) error
 	GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (core.Session, error)
 }
 
@@ -96,7 +97,13 @@ func (r *AuthRepo) DeletePassResetCode(ctx context.Context, code core.CodeCreden
 }
 
 func (r *AuthRepo) SetSession(ctx context.Context, session core.Session) error {
-	query := fmt.Sprintf("UPDATE %s us SET refresh_token = $1 WHERE user_id = $2", userSessionTable)
+	query := fmt.Sprintf("INSERT INTO  %s (user_id,refresh_token) values ($1, $2)", userSessionTable)
+	_, err := r.db.Pool.Exec(ctx, query, session.UserId, session.RefreshToken)
+
+	return err
+}
+func (r *AuthRepo) DeleteSession(ctx context.Context, session core.Session) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE refresh_token = $1 AND user_id = $2", userSessionTable)
 	_, err := r.db.Pool.Exec(ctx, query, session.RefreshToken, session.UserId)
 
 	return err

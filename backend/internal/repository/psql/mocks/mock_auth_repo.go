@@ -70,6 +70,20 @@ func (mr *MockAuthMockRecorder) DeletePassResetCode(ctx, code any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePassResetCode", reflect.TypeOf((*MockAuth)(nil).DeletePassResetCode), ctx, code)
 }
 
+// DeleteSession mocks base method.
+func (m *MockAuth) DeleteSession(ctx context.Context, session core.Session) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSession", ctx, session)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSession indicates an expected call of DeleteSession.
+func (mr *MockAuthMockRecorder) DeleteSession(ctx, session any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockAuth)(nil).DeleteSession), ctx, session)
+}
+
 // GetUserByEmail mocks base method.
 func (m *MockAuth) GetUserByEmail(ctx context.Context, email string) (core.User, error) {
 	m.ctrl.T.Helper()

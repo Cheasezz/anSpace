@@ -82,11 +82,11 @@ func (s *AuthService) LogOut(ctx context.Context, refreshToken string) (auth.Tok
 	if err != nil {
 		return tkns, err
 	}
-	session.RefreshToken = tkns.Refresh.Token
 
-	if err = s.repo.SetSession(ctx, session); err != nil {
+	if err = s.repo.DeleteSession(ctx, session); err != nil {
 		return auth.Tokens{}, err
 	}
+
 	return tkns, nil
 }
 

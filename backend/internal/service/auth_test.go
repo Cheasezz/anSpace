@@ -260,7 +260,7 @@ func TestAuth_LogOut(t *testing.T) {
 			expTokens: auth.Tokens{Refresh: auth.RTknInfo{ExpiresAt: time.Now()}},
 			mockBehavior: func(d deps, rt string, s core.Session) {
 				d.r.EXPECT().GetUserSessionByRefreshToken(gomock.Any(), rt).Return(s, nil)
-				d.r.EXPECT().SetSession(gomock.Any(), gomock.Any())
+				d.r.EXPECT().DeleteSession(gomock.Any(), s)
 			},
 		},
 		{

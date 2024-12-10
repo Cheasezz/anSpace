@@ -244,26 +244,6 @@ func (h *Auth) genPassResetCode(c *gin.Context) {
 	c.AbortWithStatus(http.StatusOK)
 }
 
-// TODO: Separate validation for email and pass
-// func (h *Auth) validateEmailAndPass(e string, p string) error {
-// 	var (
-// 		trimE = strings.TrimSpace(e)
-// 		trimP = strings.TrimSpace(p)
-// 	)
-
-// 	if len(trimE) == 0 || len(trimP) == 0 {
-// 		return errEmptyEmailOrPass
-// 	}
-
-// 	if ok := govalidator.MinStringLength(trimP, "12"); !ok {
-// 		return errShortPass
-// 	}
-// 	if ok := govalidator.IsExistingEmail(trimE); !ok {
-// 		return errIncorrectEmail
-// 	}
-// 	return nil
-// }
-
 func (h *Auth) validateEmail(email string) error {
 	var (
 		trimE = strings.TrimSpace(email)
