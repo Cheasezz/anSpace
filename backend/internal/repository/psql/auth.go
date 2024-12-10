@@ -46,15 +46,6 @@ func (r *AuthRepo) CreateUser(ctx context.Context, signUp core.AuthCredentials) 
 		return uuid.UUID{}, err
 	}
 
-	createUserSessionQuery := fmt.Sprintf("INSERT INTO %s (user_id) values ($1)", userSessionTable)
-	_, err = tx.Exec(ctx, createUserSessionQuery, id)
-	if err != nil {
-		if errR := tx.Rollback(ctx); errR != nil {
-			return uuid.UUID{}, errR
-		}
-		return uuid.UUID{}, err
-	}
-
 	return id, tx.Commit(ctx)
 }
 
